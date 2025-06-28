@@ -1,0 +1,76 @@
+Objective: To establish a professional project foundation by meticulously planning your work, securing your repository, building a functional application baseline, and creating an automated Continuous Integration (CI) pipeline to ensure code quality.
+
+Instructions:
+Your first major task is to lay a professional foundation for your entire project. This involves not only writing the first version of your application but also meticulously planning the work ahead and securing your development environment from day one.
+
+Project Planning & Management:
+
+Set up your GitHub Project or Azure Board.
+
+Create high-level work items (Issues/Epics) for all major milestones of the course (e.g., "Containerization," "IaC," "CD Pipeline").
+
+Break down the work for this assignment into smaller, specific tasks on your board. As you work, move these tasks across the columns (e.g., from "To Do" to "In Progress" to "Done").
+
+Secure Repository Setup:
+
+Initialize your Git repository and create a main and develop branch.
+
+Enable Branch Protection Rules on your main branch. It must require:
+
+A Pull Request before merging.
+
+At least one reviewer's approval.
+
+Status checks from your CI pipeline to pass.
+
+Application Development & CI:
+
+Develop the baseline version of your application as outlined in your approved proposal.
+
+Create a CI pipeline (GitHub Actions or Azure Pipelines) that automatically runs on Pull Requests. This pipeline must lint your code and run your unit tests.
+
+What to Submit:
+A link to your public GitHub / Azure DevOps repository.
+
+A direct link to your Project Board.
+
+Your README.md file (must include a project description and local setup instructions).
+
+Rubric
+Summative Phase 1
+Summative Phase 1
+Criteria	Ratings	Pts
+This criterion is linked to a learning outcomeProject Management
+7 to >5.0 Pts
+Exemplary
+Project board contains detailed User Stories and Tasks for future milestones. The work for this assignment was meticulously tracked, with items moving across the board and linked to PRs. The plan is clear and professional.
+5 to >2.0 Pts
+Satisfactory
+Project board is set up, but future work is high-level or missing detail. Work for this assignment was tracked, but not consistently. The basic structure is there but lacks professional polish.
+2 to >0 Pts
+Needs Improvement
+Project board is missing, incomplete, or was not used to track the work for this assignment. The project lacks a clear, actionable plan.
+7 pts
+This criterion is linked to a learning outcomeRepository Security & Git Usage
+6 to >4.0 Pts
+Exemplary
+Branch protection rules are fully configured as required. Git history is clean, with atomic commits, descriptive messages, and clear use of feature branches for all changes. The workflow is professional.
+4 to >2.0 Pts
+Satisfactory
+Branch protection rules are present but may be missing a component (e.g., no reviewer required). Git history shows some use of branches, but commits may be large or have generic messages. The workflow is functional but inconsistent.
+2 to >0 Pts
+Needs Improvement
+No branch protection rules are enabled, commits were made directly to main/develop, or the Git history is chaotic and difficult to follow.
+6 pts
+This criterion is linked to a learning outcomeApplication & CI Implementation
+12 to >9.0 Pts
+Exemplary
+The application is fully functional, well-structured, and includes comprehensive unit tests. The CI pipeline is efficient, correctly configured, and seamlessly integrated as a required status check on PRs.
+9 to >5.0 Pts
+Satisfactory
+The application is mostly functional but may have minor bugs or incomplete features. Unit tests exist but may not cover all critical logic. The CI pipeline runs but might have redundant steps or is not properly enforced by branch protection.
+5 to >0 Pts
+Needs Improvement
+The application fails to run, is missing core features, or has no unit tests. The CI pipeline is missing, fails consistently due to configuration errors, or is not triggered correctly.
+12 pts
+Total points: 25
