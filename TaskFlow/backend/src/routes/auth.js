@@ -1,176 +1,126 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
-const { query } = require('../config/database');
-const { 
-  generateToken, 
-  authenticateToken,
-  generateResetToken,
-  verifyResetToken 
-} = require('../middleware/auth');
+const pool = require('../config/database');
+const auth = require('../middleware/auth');
 
 const router = express.Router();
 
-// Validation middleware
-const registerValidation = [
-  body('username')
-    .isLength({ min: 3, max: 50 })
-    .withMessage('Username must be between 3 and 50 characters')
-    .matches(/^[a-zA-Z0-9_]+$/)
-    .withMessage('Username can only contain letters, numbers, and underscores'),
-  body('email')
-    .isEmail()
-    .normalizeEmail()
-    .withMessage('Please provide a valid email'),
-  body('password')
-    .isLength({ min: 6 })
-    .withMessage('Password must be at least 6 characters long')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
-    .withMessage('Password must contain at least one lowercase letter, one uppercase letter, and one number'),
-];
-
-const loginValidation = [
-  body('username').notEmpty().withMessage('Username is required'),
-  body('password').notEmpty().withMessage('Password is required'),
-];
-
-const forgotPasswordValidation = [
-  body('email').isEmail().normalizeEmail().withMessage('Please provide a valid email'),
-];
-
-const resetPasswordValidation = [
-  body('token').notEmpty().withMessage('Reset token is required'),
-  body('password')
-    .isLength({ min: 6 })
-    .withMessage('Password must be at least 6 characters long')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
-    .withMessage('Password must contain at least one lowercase letter, one uppercase letter, and one number'),
-];
-
-// Helper function to handle validation errors
-const handleValidationErrors = (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({
-      success: false,
-      message: 'Validation failed',
-      errors: errors.array(),
-    });
-  }
-  next();
-};
-
-// @route   POST /api/auth/register
-// @desc    Register a new user
-// @access  Public
-router.post('/register', registerValidation, handleValidationErrors, async (req, res) => {
+// Register
+router.post('/register', [
+  body('username').isLength({ min: 3 }).withMessage('Username must be at least 3 characters'),
+  body('email').isEmail().withMessage('Please provide a valid email'),
+  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
+], async (req, res) => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
     const { username, email, password } = req.body;
 
-    // Check if user already exists
-    const existingUser = await query(
-      'SELECT id FROM users WHERE username = $1 OR email = $2',
-      [username, email]
+    // Check if user exists
+    const existingUser = await pool.query(
+      'SELECT id FROM users WHERE email = $1 OR username = $2', 
+      [email, username]
     );
 
     if (existingUser.rows.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'User with this username or email already exists',
-      });
+      return res.status(400).json({ message: 'User already exists' });
     }
 
     // Hash password
     const saltRounds = 12;
-    const passwordHash = await bcrypt.hash(password, saltRounds);
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     // Create user
-    const newUser = await query(
-      'INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id, username, email, created_at',
-      [username, email, passwordHash]
+    const result = await pool.query(
+      'INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id, username, email',
+      [username, email, hashedPassword]
     );
 
-    const user = newUser.rows[0];
+    const user = result.rows[0];
 
-    // Generate JWT token
-    const token = generateToken(user.id);
+    // Generate JWT
+    const token = jwt.sign(
+      { userId: user.id }, 
+      process.env.JWT_SECRET, 
+      { expiresIn: process.env.JWT_EXPIRES_IN }
+    );
 
     res.status(201).json({
-      success: true,
-      message: 'User registered successfully',
-      data: {
-        user: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          createdAt: user.created_at,
-        },
-        token,
-      },
+      message: 'User created successfully',
+      token,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email
+      }
     });
   } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to register user',
-    });
+    console.error('Register error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
-// @route   POST /api/auth/login
-// @desc    Login user
-// @access  Public
-router.post('/login', loginValidation, handleValidationErrors, async (req, res) => {
+// Login
+router.post('/login', [
+  body('email').isEmail().withMessage('Please provide a valid email'),
+  body('password').exists().withMessage('Password is required')
+], async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
 
-    // Find user by username or email
-    const userResult = await query(
-      'SELECT id, username, email, password_hash, created_at FROM users WHERE username = $1 OR email = $1',
-      [username]
+    const { email, password } = req.body;
+
+    // Find user
+    const result = await pool.query(
+      'SELECT id, username, email, password_hash FROM users WHERE email = $1',
+      [email]
     );
 
-    if (userResult.rows.length === 0) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid credentials',
-      });
+    if (result.rows.length === 0) {
+      return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    const user = userResult.rows[0];
+    const user = result.rows[0];
 
     // Check password
-    const isPasswordValid = await bcrypt.compare(password, user.password_hash);
-    if (!isPasswordValid) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid credentials',
-      });
+    const isMatch = await bcrypt.compare(password, user.password_hash);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    // Generate JWT token
-    const token = generateToken(user.id);
+    // Generate JWT
+    const token = jwt.sign(
+      { userId: user.id }, 
+      process.env.JWT_SECRET, 
+      { expiresIn: process.env.JWT_EXPIRES_IN }
+    );
 
     res.json({
-      success: true,
       message: 'Login successful',
-      data: {
-        user: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          createdAt: user.created_at,
-        },
-        token,
-      },
-    }); 
-  } catch (error) { 
-    console.error('Login error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to login user',
+      token,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email
+      }
     });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
-}); 
+});
+
+// Get current user
+router.get('/me', auth, (req, res) => {
+  res.json({ user: req.user });
+});
 
 module.exports = router;

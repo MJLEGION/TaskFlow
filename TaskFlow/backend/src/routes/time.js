@@ -1,462 +1,215 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
-const { query, getClient } = require('../config/database');
-const { authenticateToken, checkResourceOwnership } = require('../middleware/auth');
+const pool = require('../config/database');
+const auth = require('../middleware/auth');
 
 const router = express.Router();
 
-// Apply authentication to all routes
-router.use(authenticateToken);
-
-// Validation middleware
-const timeEntryValidation = [
-  body('task_id')
-    .isInt({ min: 1 })
-    .withMessage('Valid task ID is required'),
-  body('start_time')
-    .isISO8601()
-    .withMessage('Valid start time is required'),
-  body('end_time')
-    .optional()
-    .isISO8601()
-    .withMessage('End time must be a valid ISO8601 date'),
-  body('description')
-    .optional()
-    .isLength({ max: 500 })
-    .withMessage('Description must not exceed 500 characters'),
-];
-
-const handleValidationErrors = (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({
-      success: false,
-      message: 'Validation failed',
-      errors: errors.array(),
-    });
-  }
-  next();
-};
-
-// Middleware to check if user owns the task
-const checkTaskOwnership = async (req, res, next) => {
+// Get time entries for a task
+router.get('/task/:taskId', auth, async (req, res) => {
   try {
-    const taskId = req.body.task_id || req.query.task_id;
-    const userId = req.user.id;
-
-    if (!taskId) {
-      return next();
-    }
-
-    const result = await query(`
-      SELECT p.user_id 
-      FROM tasks t 
-      JOIN projects p ON t.project_id = p.id 
-      WHERE t.id = $1
-    `, [taskId]);
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Task not found',
-      });
-    }
-
-    if (result.rows[0].user_id !== userId) {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied',
-      });
-    }
-
-    next();
-  } catch (error) {
-    console.error('Task ownership check error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to verify task ownership',
-    });
-  }
-};
-
-// @route   GET /api/time
-// @desc    Get time entries for the user
-// @access  Private
-router.get('/', async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const taskId = req.query.task_id;
-    const projectId = req.query.project_id;
-    const startDate = req.query.start_date;
-    const endDate = req.query.end_date;
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 50;
-    const offset = (page - 1) * limit;
-
-    let queryText = `
-      SELECT 
-        te.*,
-        t.title as task_title,
-        p.name as project_name,
-        p.color as project_color
-      FROM time_entries te
-      JOIN tasks t ON te.task_id = t.id
+    // Verify task belongs to user
+    const taskCheck = await pool.query(`
+      SELECT t.id FROM tasks t
       JOIN projects p ON t.project_id = p.id
-      WHERE te.user_id = $1
-    `;
-    
-    const queryParams = [userId];
-    let paramCount = 1;
+      WHERE t.id = $1 AND p.user_id = $2
+    `, [req.params.taskId, req.user.id]);
 
-    if (taskId) {
-      paramCount++;
-      queryText += ` AND te.task_id = $${paramCount}`;
-      queryParams.push(taskId);
+    if (taskCheck.rows.length === 0) {
+      return res.status(404).json({ message: 'Task not found' });
     }
 
-    if (projectId) {
-      paramCount++;
-      queryText += ` AND t.project_id = $${paramCount}`;
-      queryParams.push(projectId);
-    }
+    const result = await pool.query(
+      'SELECT * FROM time_entries WHERE task_id = $1 ORDER BY start_time DESC',
+      [req.params.taskId]
+    );
 
-    if (startDate) {
-      paramCount++;
-      queryText += ` AND te.start_time >= $${paramCount}`;
-      queryParams.push(startDate);
-    }
-
-    if (endDate) {
-      paramCount++;
-      queryText += ` AND te.start_time <= $${paramCount}`;
-      queryParams.push(endDate);
-    }
-
-    queryText += `
-      ORDER BY te.start_time DESC
-      LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}
-    `;
-
-    queryParams.push(limit, offset);
-
-    const timeEntriesResult = await query(queryText, queryParams);
-
-    // Get total count and summary stats
-    let countQuery = `
-      SELECT 
-        COUNT(*) as total_entries,
-        COALESCE(SUM(te.duration), 0) as total_duration
-      FROM time_entries te
-      JOIN tasks t ON te.task_id = t.id
-      JOIN projects p ON t.project_id = p.id
-      WHERE te.user_id = $1
-    `;
-
-    const countParams = [userId];
-    let countParamCount = 1;
-
-    if (taskId) {
-      countParamCount++;
-      countQuery += ` AND te.task_id = $${countParamCount}`;
-      countParams.push(taskId);
-    }
-
-    if (projectId) {
-      countParamCount++;
-      countQuery += ` AND t.project_id = $${countParamCount}`;
-      countParams.push(projectId);
-    }
-
-    if (startDate) {
-      countParamCount++;
-      countQuery += ` AND te.start_time >= $${countParamCount}`;
-      countParams.push(startDate);
-    }
-
-    if (endDate) {
-      countParamCount++;
-      countQuery += ` AND te.start_time <= $${countParamCount}`;
-      countParams.push(endDate);
-    }
-
-    const countResult = await query(countQuery, countParams);
-    const totalEntries = parseInt(countResult.rows[0].total_entries);
-    const totalDuration = parseInt(countResult.rows[0].total_duration);
-    const totalPages = Math.ceil(totalEntries / limit);
-
-    res.json({
-      success: true,
-      data: {
-        timeEntries: timeEntriesResult.rows,
-        summary: {
-          totalEntries,
-          totalDuration,
-          totalHours: Math.round((totalDuration / 3600) * 100) / 100,
-        },
-        pagination: {
-          currentPage: page,
-          totalPages,
-          totalEntries,
-          hasNext: page < totalPages,
-          hasPrev: page > 1,
-        },
-      },
-    });
+    res.json(result.rows);
   } catch (error) {
     console.error('Get time entries error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch time entries',
-    });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
-// @route   GET /api/time/active
-// @desc    Get active time entry for the user
-// @access  Private
-router.get('/active', async (req, res) => {
+// Get time summary for user
+router.get('/summary', auth, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const { period = 'week' } = req.query;
+    
+    let dateFilter = '';
+    switch (period) {
+      case 'today':
+        dateFilter = "AND DATE(te.start_time) = CURRENT_DATE";
+        break;
+      case 'week':
+        dateFilter = "AND te.start_time >= CURRENT_DATE - INTERVAL '7 days'";
+        break;
+      case 'month':
+        dateFilter = "AND te.start_time >= CURRENT_DATE - INTERVAL '30 days'";
+        break;
+      default:
+        dateFilter = "AND te.start_time >= CURRENT_DATE - INTERVAL '7 days'";
+    }
 
-    const result = await query(`
+    const result = await pool.query(`
       SELECT 
-        te.*,
-        t.title as task_title,
         p.name as project_name,
-        p.id as project_id,
-        p.color as project_color
+        p.color as project_color,
+        t.title as task_title,
+        SUM(te.duration_minutes) as total_minutes,
+        COUNT(te.id) as session_count
       FROM time_entries te
       JOIN tasks t ON te.task_id = t.id
       JOIN projects p ON t.project_id = p.id
-      WHERE te.user_id = $1 AND te.end_time IS NULL
+      WHERE p.user_id = $1 ${dateFilter}
+      GROUP BY p.id, p.name, p.color, t.id, t.title
+      ORDER BY total_minutes DESC
+    `, [req.user.id]);
+
+    const totalMinutes = result.rows.reduce((sum, row) => sum + parseInt(row.total_minutes), 0);
+
+    res.json({
+      summary: result.rows,
+      totalMinutes,
+      totalHours: Math.round((totalMinutes / 60) * 100) / 100
+    });
+  } catch (error) {
+    console.error('Get time summary error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Start time tracking
+router.post('/start', [
+  auth,
+  body('task_id').isInt().withMessage('Valid task ID is required')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { task_id } = req.body;
+
+    // Verify task belongs to user
+    const taskCheck = await pool.query(`
+      SELECT t.id FROM tasks t
+      JOIN projects p ON t.project_id = p.id
+      WHERE t.id = $1 AND p.user_id = $2
+    `, [task_id, req.user.id]);
+
+    if (taskCheck.rows.length === 0) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    // Check if there's already an active timer
+    const activeTimer = await pool.query(
+      'SELECT id FROM time_entries WHERE task_id IN (SELECT id FROM tasks WHERE project_id IN (SELECT id FROM projects WHERE user_id = $1)) AND end_time IS NULL',
+      [req.user.id]
+    );
+
+    if (activeTimer.rows.length > 0) {
+      return res.status(400).json({ message: 'You already have an active timer running' });
+    }
+
+    const result = await pool.query(
+      'INSERT INTO time_entries (task_id, start_time) VALUES ($1, CURRENT_TIMESTAMP) RETURNING *',
+      [task_id]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error('Start timer error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Stop time tracking
+router.post('/stop/:id', auth, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      UPDATE time_entries 
+      SET end_time = CURRENT_TIMESTAMP,
+          duration_minutes = EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - start_time)) / 60
+      WHERE id = $1 
+        AND task_id IN (
+          SELECT t.id FROM tasks t
+          JOIN projects p ON t.project_id = p.id
+          WHERE p.user_id = $2
+        )
+        AND end_time IS NULL
+      RETURNING *
+    `, [req.params.id, req.user.id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Active timer not found' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Stop timer error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get active timer
+router.get('/active', auth, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT te.*, t.title as task_title, p.name as project_name
+      FROM time_entries te
+      JOIN tasks t ON te.task_id = t.id
+      JOIN projects p ON t.project_id = p.id
+      WHERE p.user_id = $1 AND te.end_time IS NULL
       ORDER BY te.start_time DESC
       LIMIT 1
-    `, [userId]);
+    `, [req.user.id]);
 
-    if (result.rows.length === 0) {
-      return res.json({
-        success: true,
-        data: null, // No active timer
-      });
-    }
-
-    res.json({
-      success: true,
-      data: result.rows[0],
-    });
-
+    res.json(result.rows[0] || null);
   } catch (error) {
-    console.error('Get active time entry error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch active time entry',
-    });
+    console.error('Get active timer error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
-// @route   POST /api/time/start
-// @desc    Start a new time entry (timer)
-// @access  Private
-router.post('/start', [
-  body('task_id').isInt({ min: 1 }).withMessage('Valid task ID is required'),
-  body('start_time').optional().isISO8601().withMessage('Start time must be a valid ISO8601 date'),
-  body('description').optional().isLength({ max: 500 }).withMessage('Description must not exceed 500 characters'),
-], handleValidationErrors, checkTaskOwnership, async (req, res) => {
-  const client = await getClient();
+// Add manual time entry
+router.post('/manual', [
+  auth,
+  body('task_id').isInt().withMessage('Valid task ID is required'),
+  body('duration_minutes').isInt({ min: 1 }).withMessage('Duration must be at least 1 minute'),
+  body('description').optional().isLength({ max: 255 }).withMessage('Description too long')
+], async (req, res) => {
   try {
-    const { task_id, start_time, description } = req.body;
-    const userId = req.user.id;
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
 
-    await client.query('BEGIN');
+    const { task_id, duration_minutes, description, date } = req.body;
 
-    // Ensure no other timer is running for this user
-    const existingTimer = await client.query(
-      'SELECT id FROM time_entries WHERE user_id = $1 AND end_time IS NULL',
-      [userId]
+    // Verify task belongs to user
+    const taskCheck = await pool.query(`
+      SELECT t.id FROM tasks t
+      JOIN projects p ON t.project_id = p.id
+      WHERE t.id = $1 AND p.user_id = $2
+    `, [task_id, req.user.id]);
+
+    if (taskCheck.rows.length === 0) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    const entryDate = date ? new Date(date) : new Date();
+    const startTime = new Date(entryDate);
+    const endTime = new Date(startTime.getTime() + (duration_minutes * 60000));
+
+    const result = await pool.query(
+      'INSERT INTO time_entries (task_id, start_time, end_time, duration_minutes, description) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [task_id, startTime, endTime, duration_minutes, description || null]
     );
 
-    if (existingTimer.rows.length > 0) {
-      await client.query('ROLLBACK');
-      return res.status(409).json({
-        success: false,
-        message: 'An active timer is already running. Stop it before starting a new one.',
-        data: { active_timer_id: existingTimer.rows[0].id },
-      });
-    }
-
-    const newTimeEntry = await client.query(`
-      INSERT INTO time_entries (user_id, task_id, start_time, description)
-      VALUES ($1, $2, $3, $4)
-      RETURNING *
-    `, [userId, task_id, start_time || new Date(), description || null]);
-
-    // Update task status to 'in_progress' if it's 'todo'
-    await client.query(`
-      UPDATE tasks
-      SET status = 'in_progress'
-      WHERE id = $1 AND status = 'todo'
-    `, [task_id]);
-
-    await client.query('COMMIT');
-
-    res.status(201).json({
-      success: true,
-      message: 'Timer started successfully',
-      data: newTimeEntry.rows[0],
-    });
+    res.status(201).json(result.rows[0]);
   } catch (error) {
-    await client.query('ROLLBACK');
-    console.error('Start time entry error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to start time entry',
-    });
-  } finally {
-    client.release();
-  }
-});
-
-// @route   POST /api/time/stop
-// @desc    Stop the active timer
-// @access  Private
-router.post('/stop', [
-    body('end_time').optional().isISO8601().withMessage('End time must be a valid ISO8601 date'),
-], handleValidationErrors, async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const endTime = req.body.end_time ? new Date(req.body.end_time) : new Date();
-
-    // Find the active timer
-    const activeTimerResult = await query(
-      'SELECT id, start_time FROM time_entries WHERE user_id = $1 AND end_time IS NULL ORDER BY start_time DESC LIMIT 1',
-      [userId]
-    );
-
-    if (activeTimerResult.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'No active timer found to stop',
-      });
-    }
-
-    const activeTimer = activeTimerResult.rows[0];
-    const startTime = new Date(activeTimer.start_time);
-
-    // Calculate duration in seconds
-    const duration = Math.round((endTime.getTime() - startTime.getTime()) / 1000);
-    if (duration < 0) {
-        return res.status(400).json({
-            success: false,
-            message: 'End time cannot be before start time.'
-        });
-    }
-
-    // Update the time entry
-    const updatedTimeEntry = await query(`
-      UPDATE time_entries
-      SET end_time = $1, duration = $2
-      WHERE id = $3
-      RETURNING *
-    `, [endTime, duration, activeTimer.id]);
-
-    res.json({
-      success: true,
-      message: 'Timer stopped successfully',
-      data: updatedTimeEntry.rows[0],
-    });
-  } catch (error) {
-    console.error('Stop time entry error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to stop time entry',
-    });
-  }
-});
-
-// @route   PUT /api/time/:id
-// @desc    Update a specific time entry
-// @access  Private
-router.put('/:id', checkResourceOwnership('time_entry'), [
-  body('start_time').optional().isISO8601().withMessage('Start time must be a valid ISO8601 date'),
-  body('end_time').optional().isISO8601().withMessage('End time must be a valid ISO8601 date'),
-  body('description').optional().isLength({ max: 500 }).withMessage('Description must not exceed 500 characters'),
-], handleValidationErrors, async (req, res) => {
-  try {
-    const timeEntryId = req.params.id;
-    const { start_time, end_time, description } = req.body;
-
-    const currentEntryResult = await query('SELECT * FROM time_entries WHERE id = $1', [timeEntryId]);
-    if (currentEntryResult.rows.length === 0) {
-      return res.status(404).json({ success: false, message: 'Time entry not found' });
-    }
-    const currentEntry = currentEntryResult.rows[0];
-    
-    const newStartTime = start_time ? new Date(start_time) : new Date(currentEntry.start_time);
-    const newEndTime = end_time ? new Date(end_time) : (currentEntry.end_time ? new Date(currentEntry.end_time) : null);
-    
-    let newDuration = currentEntry.duration;
-    if (newEndTime) {
-      newDuration = Math.round((newEndTime.getTime() - newStartTime.getTime()) / 1000);
-      if (newDuration < 0) {
-        return res.status(400).json({ success: false, message: 'End time cannot be before start time.' });
-      }
-    } else if (currentEntry.end_time !== null) {
-      // If end_time is being cleared, set duration to null
-      newDuration = null;
-    }
-
-    const updatedTimeEntry = await query(`
-      UPDATE time_entries
-      SET 
-        start_time = $1,
-        end_time = $2,
-        description = $3,
-        duration = $4
-      WHERE id = $5
-      RETURNING *
-    `, [newStartTime, newEndTime, description !== undefined ? description : currentEntry.description, newDuration, timeEntryId]);
-
-    res.json({
-      success: true,
-      message: 'Time entry updated successfully',
-      data: updatedTimeEntry.rows[0],
-    });
-  } catch (error) {
-    console.error('Update time entry error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to update time entry',
-    });
-  }
-});
-
-// @route   DELETE /api/time/:id
-// @desc    Delete a time entry
-// @access  Private
-router.delete('/:id', checkResourceOwnership('time_entry'), async (req, res) => {
-  try {
-    const timeEntryId = req.params.id;
-
-    const result = await query('DELETE FROM time_entries WHERE id = $1 RETURNING *', [timeEntryId]);
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Time entry not found',
-      });
-    }
-
-    res.json({
-      success: true,
-      message: 'Time entry deleted successfully',
-    });
-  } catch (error) {
-    console.error('Delete time entry error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to delete time entry',
-    });
-  }
-});
-
-module.exports = router;
+    console.error('Add manual time entry error:', error);
+    res.status(500).json({ message: 'Server error' });
+  };
