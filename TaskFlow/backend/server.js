@@ -4,10 +4,10 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
-const authRoutes = require('./routes/auth');
-const projectRoutes = require('./routes/projects');
-const taskRoutes = require('./routes/tasks');
-const timeRoutes = require('./routes/time');
+const authRoutes = require('./src/routes/auth');
+const projectRoutes = require('./src/routes/projects');
+const taskRoutes = require('./src/routes/tasks');
+const timeRoutes = require('./src/routes/time');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -36,25 +36,26 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/time', timeRoutes);
 
-// Health check
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ 
-    message: 'Something went wrong!',
-    error: process.env.NODE_ENV === 'development' ? err.message : {}
+    error: 'Something went wrong!',
+    message: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
   });
 });
 
 // 404 handler
 app.use('*', (req, res) => {
-  res.status(404).json({ message: 'Route not found' });
+  res.status(404).json({ error: 'Route not found' });
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 TaskFlow Backend running on port ${PORT}`);
+  console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
 });
