@@ -1,0 +1,168 @@
+{
+  "version": 4,
+  "terraform_version": "1.12.2",
+  "serial": 37,
+  "lineage": "b160a2fb-0f46-c2b4-484b-b541ca09c9b4",
+  "outputs": {
+    "db_server_name": {
+      "value": "taskflow-db",
+      "type": "string"
+    },
+    "resource_group_name": {
+      "value": "taskflow-rg",
+      "type": "string"
+    }
+  },
+  "resources": [
+    {
+      "mode": "managed",
+      "type": "azurerm_container_registry",
+      "name": "acr",
+      "provider": "provider[\"registry.terraform.io/hashicorp/azurerm\"]",
+      "instances": [
+        {
+          "status": "tainted",
+          "schema_version": 2,
+          "attributes": {
+            "admin_enabled": true,
+            "admin_password": "j4vGqjakctmRgCzR0BJkCdnshNTmXiC0sLXJV9eSNb+ACRBuQkKq",
+            "admin_username": "taskflowacrlegion2024",
+            "anonymous_pull_enabled": false,
+            "data_endpoint_enabled": false,
+            "encryption": [
+              {
+                "enabled": false,
+                "identity_client_id": "",
+                "key_vault_key_id": ""
+              }
+            ],
+            "export_policy_enabled": true,
+            "georeplications": [],
+            "id": "/subscriptions/7f07123f-7668-4d26-a74d-3012ec7827fa/resourceGroups/taskflow-rg/providers/Microsoft.ContainerRegistry/registries/taskflowacrlegion2024",
+            "identity": [],
+            "location": "uksouth",
+            "login_server": "taskflowacrlegion2024.azurecr.io",
+            "name": "taskflowacrlegion2024",
+            "network_rule_bypass_option": "AzureServices",
+            "network_rule_set": [],
+            "public_network_access_enabled": true,
+            "quarantine_policy_enabled": false,
+            "resource_group_name": "taskflow-rg",
+            "retention_policy": [
+              {
+                "days": 7,
+                "enabled": false
+              }
+            ],
+            "sku": "Basic",
+            "tags": {},
+            "timeouts": null,
+            "trust_policy": [
+              {
+                "enabled": false
+              }
+            ],
+            "zone_redundancy_enabled": false
+          },
+          "sensitive_attributes": [
+            [
+              {
+                "type": "get_attr",
+                "value": "admin_password"
+              }
+            ]
+          ],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxODAwMDAwMDAwMDAwLCJkZWxldGUiOjE4MDAwMDAwMDAwMDAsInJlYWQiOjMwMDAwMDAwMDAwMCwidXBkYXRlIjoxODAwMDAwMDAwMDAwfSwic2NoZW1hX3ZlcnNpb24iOiIyIn0=",
+          "dependencies": [
+            "azurerm_resource_group.main"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "azurerm_postgresql_flexible_server",
+      "name": "db",
+      "provider": "provider[\"registry.terraform.io/hashicorp/azurerm\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "administrator_login": "taskflowadmin",
+            "administrator_password": "TaskflowDb!2024",
+            "authentication": [
+              {
+                "active_directory_auth_enabled": false,
+                "password_auth_enabled": true,
+                "tenant_id": ""
+              }
+            ],
+            "auto_grow_enabled": false,
+            "backup_retention_days": 7,
+            "create_mode": null,
+            "customer_managed_key": [],
+            "delegated_subnet_id": "",
+            "fqdn": "taskflow-db.postgres.database.azure.com",
+            "geo_redundant_backup_enabled": false,
+            "high_availability": [],
+            "id": "/subscriptions/7f07123f-7668-4d26-a74d-3012ec7827fa/resourceGroups/taskflow-rg/providers/Microsoft.DBforPostgreSQL/flexibleServers/taskflow-db",
+            "identity": [],
+            "location": "uksouth",
+            "maintenance_window": [],
+            "name": "taskflow-db",
+            "point_in_time_restore_time_in_utc": null,
+            "private_dns_zone_id": "",
+            "public_network_access_enabled": true,
+            "replication_role": "",
+            "resource_group_name": "taskflow-rg",
+            "sku_name": "B_Standard_B1ms",
+            "source_server_id": null,
+            "storage_mb": 32768,
+            "storage_tier": "P4",
+            "tags": {},
+            "timeouts": null,
+            "version": "13",
+            "zone": "1"
+          },
+          "sensitive_attributes": [
+            [
+              {
+                "type": "get_attr",
+                "value": "administrator_password"
+              }
+            ]
+          ],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjozNjAwMDAwMDAwMDAwLCJkZWxldGUiOjM2MDAwMDAwMDAwMDAsInJlYWQiOjMwMDAwMDAwMDAwMCwidXBkYXRlIjozNjAwMDAwMDAwMDAwfX0=",
+          "dependencies": [
+            "azurerm_resource_group.main"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "azurerm_resource_group",
+      "name": "main",
+      "provider": "provider[\"registry.terraform.io/hashicorp/azurerm\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "id": "/subscriptions/7f07123f-7668-4d26-a74d-3012ec7827fa/resourceGroups/taskflow-rg",
+            "location": "uksouth",
+            "managed_by": "",
+            "name": "taskflow-rg",
+            "tags": {},
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo1NDAwMDAwMDAwMDAwLCJkZWxldGUiOjU0MDAwMDAwMDAwMDAsInJlYWQiOjMwMDAwMDAwMDAwMCwidXBkYXRlIjo1NDAwMDAwMDAwMDAwfX0="
+        }
+      ]
+    }
+  ],
+  "check_results": null
+}
