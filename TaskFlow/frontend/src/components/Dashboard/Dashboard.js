@@ -4,7 +4,7 @@ import { toast } from 'react-hot-toast';
 import { projectsAPI, tasksAPI, timeAPI } from '../../services/api';
 import ProjectCard from './ProjectCard';
 import TaskSummary from './TaskSummary';
-import { Plus, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { Plus, Clock, CheckCircle, AlertCircle, FolderOpen } from 'lucide-react';
 
 const Dashboard = () => {
   const [projects, setProjects] = useState([]);
