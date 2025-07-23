@@ -1,12 +1,37 @@
-# Backend Dockerfile for TaskFlow
-FROM node:18-alpine
+# Backend Dockerfile for TaskFlow - Multi-stage build
+# Stage 1: Dependencies
+FROM node:18-alpine AS dependencies
+WORKDIR /app
+
+# Copy package files for better caching
+COPY package*.json ./
+
+# Install all dependencies (including dev dependencies for potential build steps)
+RUN npm ci --only=production && npm cache clean --force
+
+# Stage 2: Production
+FROM node:18-alpine AS production
+
+# Create non-root user for security
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S taskflow -u 1001
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm install --production
+# Copy production dependencies from previous stage
+COPY --from=dependencies --chown=taskflow:nodejs /app/node_modules ./node_modules
 
-COPY . .
+# Copy application code
+COPY --chown=taskflow:nodejs . .
+
+# Switch to non-root user
+USER taskflow
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:5000/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
 
 EXPOSE 5000
+
+# Use exec form for better signal handling
 CMD ["node", "server.js"]
