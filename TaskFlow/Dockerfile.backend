@@ -4,7 +4,7 @@ FROM node:18-alpine AS dependencies
 WORKDIR /app
 
 # Copy package files for better caching
-COPY package*.json ./
+COPY backend/package*.json ./
 
 # Install all dependencies (including dev dependencies for potential build steps)
 RUN npm ci --only=production && npm cache clean --force
@@ -22,7 +22,7 @@ WORKDIR /app
 COPY --from=dependencies --chown=taskflow:nodejs /app/node_modules ./node_modules
 
 # Copy application code
-COPY --chown=taskflow:nodejs . .
+COPY --chown=taskflow:nodejs backend/ .
 
 # Switch to non-root user
 USER taskflow
