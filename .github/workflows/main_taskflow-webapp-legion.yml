@@ -32,7 +32,7 @@ jobs:
           npm install
           npm run build --if-present
           npm run test --if-present
-        working-directory: ./frontend # <--- RE-ADDED: This is the standard way to set the working directory for a step
+        working-directory: ./frontend # This is the standard way to set the working directory for a step
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
