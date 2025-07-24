@@ -86,4 +86,4 @@ Built with ❤️ by the TaskFlow Team
 
 ⭐ Star us on GitHub if you like TaskFlow!
 
-## Entire Codebase reviewed by Chidiebere Ekwedike
+Entire Codebase reviewed by Chidiebere Ekwedike. Awesome work, Michael
