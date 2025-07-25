@@ -17,7 +17,7 @@
 ## Peer Review
 
 - **Link to Pull Request you reviewed:**
- (https://github.com/cekwedike/campus-connect/pull/38#issuecomment-3116594365)
+ (https://github.com/cekwedike/campus-connect/pull/38#issuecomment-3116594365) 
 
 ---
 
