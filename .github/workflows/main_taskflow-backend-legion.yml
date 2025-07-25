@@ -28,13 +28,13 @@ jobs:
           npm install
           npm run build --if-present
           npm run test --if-present
-        working-directory: ./backend # Added this line to specify the backend directory
+        working-directory: ${{ github.workspace }}/backend # Changed to use github.workspace for clarity
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: ./backend # Changed path to reference the backend directory
+          path: ${{ github.workspace }}/backend # Changed path to use github.workspace for clarity
 
   deploy:
     runs-on: ubuntu-latest
