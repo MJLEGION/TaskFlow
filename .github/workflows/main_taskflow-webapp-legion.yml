@@ -19,8 +19,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      # Removed Debug: List files at repository root
-      
       - name: Set up Node.js version
         uses: actions/setup-node@v3
         with:
@@ -38,7 +36,7 @@ jobs:
         run: |
           mkdir -p deployment-package
           # Copy the built React app
-          cp -r ./frontend/build/* ./deployment-package/ # Corrected source path
+          cp -r ./frontend/build/* ./deployment-package/
           # Create a simple server.js for serving the React app
           cat > ./deployment-package/server.js << 'EOF'
           const express = require('express');
@@ -103,8 +101,8 @@ jobs:
           name: node-app
           path: ./deployment-package
       
-      - name: Debug: List contents of downloaded artifact
-        run: ls -la ./deployment-package # Keep this debug step for final verification
+      - name: Debug: List contents of downloaded artifact # <--- THIS IS THE CRUCIAL DEBUG STEP
+        run: ls -la ./deployment-package
       
       - name: Login to Azure
         uses: azure/login@v2
