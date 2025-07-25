@@ -18,9 +18,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: List contents of repository root (DEBUG)
-        run: ls -F # This command will show us what's actually there
-
       - name: Set up Node.js version
         uses: actions/setup-node@v3
         with:
@@ -31,14 +28,16 @@ jobs:
           cd TaskFlow/backend
           npm install
           npm run build --if-present
-          npm run test --passWithNoTests
-        # Removed working-directory: ./backend as cd command is now used
+          npm test -- --passWithNoTests
+        # The '--' before '--passWithNoTests' is crucial. 
+        # It tells npm to pass the flag directly to the test script (Jest).
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: ./backend # Path for artifact upload
+          # Corrected path to ensure it uploads the content of the backend directory
+          path: TaskFlow/backend 
 
   deploy:
     runs-on: ubuntu-latest
