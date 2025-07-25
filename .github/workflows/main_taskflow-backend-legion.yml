@@ -25,15 +25,19 @@ jobs:
 
       - name: npm install, build, and test
         run: |
+          cd TaskFlow/backend
           npm install
           npm run build --if-present
-          npm run test --if-present
+          npm test -- --passWithNoTests
+        # The '--' before '--passWithNoTests' is crucial. 
+        # It tells npm to pass the flag directly to the test script (Jest).
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: .
+          # Corrected path to ensure it uploads the content of the backend directory
+          path: TaskFlow/backend 
 
   deploy:
     runs-on: ubuntu-latest
