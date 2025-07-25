@@ -1,0 +1,67 @@
+# Deploy TaskFlow Backend to Azure
+name: Deploy Backend to Azure Web App
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "TaskFlow/backend/**"
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "20.x"
+
+      - name: Install dependencies
+        run: |
+          cd TaskFlow/backend
+          npm ci --only=production
+
+      - name: Create deployment package
+        run: |
+          mkdir -p backend-deploy
+          # Copy backend files
+          cp -r TaskFlow/backend/* backend-deploy/
+          # Use the simple server for now (rename it to server.js)
+          cp TaskFlow/backend/server-simple.js backend-deploy/server.js
+          # Ensure we have the right start script
+          cd backend-deploy
+          # Create web.config for Azure App Service
+          cat > web.config << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <configuration>
+            <system.webServer>
+              <handlers>
+                <add name="iisnode" path="server.js" verb="*" modules="iisnode"/>
+              </handlers>
+              <rewrite>
+                <rules>
+                  <rule name="DynamicContent">
+                    <conditions>
+                      <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="True"/>
+                    </conditions>
+                    <action type="Rewrite" url="server.js"/>
+                  </rule>
+                </rules>
+              </rewrite>
+              <iisnode node_env="production" />
+            </system.webServer>
+          </configuration>
+          EOF
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: "taskflow-backend-legion" # You'll need to create this Azure App Service
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_BACKEND }}
+          package: ./backend-deploy

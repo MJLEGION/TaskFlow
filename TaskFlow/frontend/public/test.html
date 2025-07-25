@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>TaskFlow Test</title>
+  </head>
+  <body>
+    <h1>TaskFlow is Working!</h1>
+    <p>If you can see this, the deployment pipeline is working.</p>
+    <p>Frontend URL: <span id="frontend-url"></span></p>
+    <p>API URL: <span id="api-url"></span></p>
+
+    <script>
+      document.getElementById("frontend-url").textContent =
+        window.location.origin;
+      document.getElementById("api-url").textContent =
+        "https://taskflow-backend-legion.azurewebsites.net/api";
+
+      // Test API connection
+      fetch("https://taskflow-backend-legion.azurewebsites.net/api/health")
+        .then((response) => response.json())
+        .then((data) => {
+          document.body.innerHTML +=
+            '<p style="color: green;">✅ Backend API is responding: ' +
+            JSON.stringify(data) +
+            "</p>";
+        })
+        .catch((error) => {
+          document.body.innerHTML +=
+            '<p style="color: red;">❌ Backend API error: ' +
+            error.message +
+            "</p>";
+        });
+    </script>
+  </body>
+</html>

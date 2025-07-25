@@ -1,11 +1,13 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
-name: Build and deploy Node.js app to Azure Web App - taskflow-webapp-Legion
+name: Deploy Frontend to Azure Web App - taskflow-webapp-Legion
 
 on:
   push:
     branches:
       - main
+    paths:
+      - 'TaskFlow/frontend/**'
   workflow_dispatch:
 
 jobs:
@@ -28,24 +30,56 @@ jobs:
       - name: npm install, build, and test
         run: |
           ls -la
-          npm ci --only=production  # Use npm ci for faster, reliable builds
-          npm run build --if-present
+          npm ci
+          npm run build
           npm run test --if-present
-        working-directory: ./frontend
+        working-directory: ./TaskFlow/frontend
       
       # Create a deployment package with all necessary files
       - name: Create deployment package
         run: |
           mkdir -p deployment-package
-          cp -r ./frontend/.next ./deployment-package/
-          cp ./frontend/package.json ./deployment-package/
-          cp ./frontend/package-lock.json ./deployment-package/ || true
-          # Copy other essential files if they exist
-          cp -r ./frontend/public ./deployment-package/ || true
-          cp ./frontend/next.config.js ./deployment-package/ || true
-          # Install only production dependencies
+          # Copy the built React app
+          cp -r ./TaskFlow/frontend/build/* ./deployment-package/
+          # Create a simple server.js for serving the React app
+          cat > ./deployment-package/server.js << 'EOF'
+          const express = require('express');
+          const path = require('path');
+          const app = express();
+          const port = process.env.PORT || 8080;
+
+          // Serve static files from the build directory
+          app.use(express.static(path.join(__dirname)));
+
+          // Handle React Router - send all requests to index.html
+          app.get('*', (req, res) => {
+            res.sendFile(path.join(__dirname, 'index.html'));
+          });
+
+          app.listen(port, () => {
+            console.log(`TaskFlow frontend running on port ${port}`);
+          });
+          EOF
+          # Create package.json for the deployment
+          cat > ./deployment-package/package.json << 'EOF'
+          {
+            "name": "taskflow-frontend-deploy",
+            "version": "1.0.0",
+            "main": "server.js",
+            "scripts": {
+              "start": "node server.js"
+            },
+            "dependencies": {
+              "express": "^4.18.2"
+            },
+            "engines": {
+              "node": ">=16.0.0"
+            }
+          }
+          EOF
+          # Install production dependencies
           cd deployment-package
-          npm ci --only=production
+          npm install --only=production
       
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
