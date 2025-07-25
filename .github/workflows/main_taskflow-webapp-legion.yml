@@ -1,0 +1,120 @@
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+name: Deploy Frontend to Azure Web App - taskflow-webapp-Legion
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'frontend/**' # Adjusted path filter to match actual repo structure
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read #This is required for actions/checkout
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Node.js version
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.x'
+      
+      - name: npm install, build, and test
+        run: |
+          npm ci
+          npm run build
+          npm run test --if-present
+        working-directory: ./frontend # Corrected working directory: relative to repo root
+      
+      # Create a deployment package with all necessary files
+      - name: Create deployment package
+        run: |
+          mkdir -p deployment-package
+          # Copy the built React app
+          cp -r ./frontend/build/* ./deployment-package/
+          # Create a simple server.js for serving the React app
+          cat > ./deployment-package/server.js << 'EOF'
+          const express = require('express');
+          const path = require('path');
+          const app = express();
+          const port = process.env.PORT || 8080;
+
+          // Serve static files from the build directory
+          app.use(express.static(path.join(__dirname)));
+
+          // Handle React Router - send all requests to index.html
+          app.get('*', (req, res) => {
+            res.sendFile(path.join(__dirname, 'index.html'));
+          });
+
+          app.listen(port, () => {
+            console.log(`TaskFlow frontend running on port ${port}`);
+          });
+          EOF
+          # Create package.json for the deployment
+          cat > ./deployment-package/package.json << 'EOF'
+          {
+            "name": "taskflow-frontend-deploy",
+            "version": "1.0.0",
+            "main": "server.js",
+            "scripts": {
+              "start": "node server.js"
+            },
+            "dependencies": {
+              "express": "^4.18.2"
+            },
+            "engines": {
+              "node": ">=16.0.0"
+            }
+          }
+          EOF
+          # Install production dependencies
+          cd deployment-package
+          npm install --only=production
+      
+      - name: Upload artifact for deployment job
+        uses: actions/upload-artifact@v4
+        with:
+          name: node-app
+          path: ./deployment-package
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      id-token: write #This is required for requesting the JWT
+      contents: read #This is required for actions/checkout
+    
+    environment:
+      name: 'Production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+    
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: node-app
+          path: ./deployment-package
+      
+      - name: Debug: List contents of downloaded artifact # <--- THIS IS THE CRUCIAL DEBUG STEP
+        run: ls -la ./deployment-package
+      
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_B573F7E44E5349029F971BB091EA22AB }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_1ECAF2DD16BA45EFAE4ACBDA3BF7EA9C }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_8D0A92E3CE4E45978662BA8C8AD8A5C6 }}
+      
+      - name: 'Deploy to Azure Web App'
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'taskflow-webapp-Legion'
+          slot-name: 'Production'
+          package: ./deployment-package
