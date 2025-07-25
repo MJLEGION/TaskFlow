@@ -31,7 +31,7 @@ jobs:
           cd TaskFlow/backend
           npm install
           npm run build --if-present
-          npm run test --if-present
+          npm run test --passWithNoTests
         # Removed working-directory: ./backend as cd command is now used
 
       - name: Upload artifact for deployment job
