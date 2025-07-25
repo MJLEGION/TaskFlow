@@ -18,6 +18,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: List contents of repository root (DEBUG)
+        run: ls -F # This command will show us what's actually there
+
       - name: Set up Node.js version
         uses: actions/setup-node@v3
         with:
