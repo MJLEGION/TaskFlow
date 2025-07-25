@@ -28,7 +28,7 @@ jobs:
 
       - name: npm install, build, and test
         run: |
-          cd backend # Added explicit change directory command
+          cd TaskFlow/backend
           npm install
           npm run build --if-present
           npm run test --if-present
