@@ -1,0 +1,31 @@
+# Global owners
+* @MJLEGION
+
+# Backend code
+/TaskFlow/backend/ @MJLEGION
+
+# Frontend code  
+/TaskFlow/frontend/ @MJLEGION
+
+# Infrastructure
+/TaskFlow/infra/ @MJLEGION
+
+# CI/CD
+/.github/ @MJLEGION
+
+# Documentation
+*.md @MJLEGION
+
+# Configuration files
+*.json @MJLEGION
+*.js @MJLEGION
+*.yml @MJLEGION
+*.yaml @MJLEGION
+
+# Docker files
+Dockerfile* @MJLEGION
+docker-compose* @MJLEGION
+
+# Terraform files
+*.tf @MJLEGION
+*.tfvars @MJLEGION

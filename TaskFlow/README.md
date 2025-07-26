@@ -85,12 +85,18 @@ npm start         # Runs the React app in development mode
   - `develop`: Ongoing development
 
 - **GitHub Project Board:**  
-  Track issues, features, and milestones using the project board.
+  [TaskFlow Development Board](https://github.com/MJLEGION/TaskFlow/projects/1) - Track issues, features, and milestones using the project board.
+
+- **Project Management:**
+
+  - **Setup Guide**: [Project Board Setup Instructions](PROJECT_BOARD_SETUP.md)
+  - **Issues**: [GitHub Issues](https://github.com/MJLEGION/TaskFlow/issues)
 
 - **Branch Protection:**
   - Pull Requests required for merging to `main`
   - At least one reviewer approval
   - Passing status checks from CI pipeline
+  - **Setup Guide**: [Branch Protection Setup Instructions](BRANCH_PROTECTION_SETUP.md)
 
 ---
 
@@ -99,10 +105,53 @@ npm start         # Runs the React app in development mode
 - **GitHub Actions** is used for CI/CD.
 - On every push or pull request to `main` or `develop`, the pipeline:
   - Installs dependencies
-  - Runs linter and unit tests
+  - Runs ESLint for code quality
+  - Executes unit tests with coverage reporting
   - Builds the application
+  - Uploads coverage reports to Codecov
 
 Workflow files are in `.github/workflows/`.
+
+## Testing & Code Quality
+
+### Running Tests
+
+```bash
+# Backend tests
+cd backend
+npm test                    # Run tests
+npm run test:coverage      # Run with coverage
+npm run test:watch         # Watch mode
+
+# Frontend tests
+cd frontend
+npm test                   # Interactive test runner
+npm run test:coverage      # Run with coverage
+```
+
+### Code Linting
+
+```bash
+# Backend linting
+cd backend
+npm run lint              # Check for issues
+npm run lint:fix          # Auto-fix issues
+
+# Frontend linting
+cd frontend
+npm run lint              # Check for issues
+npm run lint:fix          # Auto-fix issues
+```
+
+### Pre-commit Hooks
+
+Pre-commit hooks are configured to run linting and tests automatically:
+
+```bash
+# Install pre-commit (optional)
+pip install pre-commit
+pre-commit install
+```
 
 ---
 
