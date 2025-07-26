@@ -26,8 +26,8 @@ Authentication: NextAuth.js
 Deployment: Vercel, GitHub Actions
 
 Testing: Jest, React Testing Library, Playwright
-
-🚀 Quick Start
+ 
+ Quick Start
 1. Clone the repository:
 
 Bash
