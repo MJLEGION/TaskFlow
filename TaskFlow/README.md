@@ -254,4 +254,42 @@ You have already tried the main available regions.
 ---
 
 **Let me know which option you want to proceed with, and I’ll guide you step by step!**
+
+---
+
+## Live Environments
+
+- **Staging:** https://taskflow-frontend-staging.azurewebsites.net
+- **Production:** https://taskflow-frontend-prod.azurewebsites.net
+- **Backend Staging:** https://taskflow-backend-staging.azurewebsites.net
+- **Backend Production:** https://taskflow-backend-prod.azurewebsites.net
+
+---
+
+## Monitoring & Observability
+
+This project uses **Azure Application Insights** for monitoring and logging.
+- All backend requests, dependencies, exceptions, and logs are automatically tracked.
+- Access the Application Insights dashboard via the Azure Portal for live metrics, traces, and alerts.
+- At least one alert is configured (e.g., for error rate or downtime).
+
+**How to view logs and metrics:**
+1. Go to the Azure Portal > Application Insights resource for this project.
+2. Use the "Live Metrics Stream" for real-time monitoring.
+3. View failures, performance, and custom logs in the dashboard.
+
+---
+
+## Video Demonstration
+
+A full video demonstration of the automated pipeline, monitoring, and release process is available at:
+- [Video Demo Link](ADD_YOUR_VIDEO_LINK_HERE)
+
+---
+
+## Release Management
+
+- All changes are tracked in [CHANGELOG.md](../CHANGELOG.md) following Conventional Commits.
+- Please use Conventional Commits for all PRs and merges.
+
 ```

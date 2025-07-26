@@ -10,7 +10,7 @@ const taskRoutes = require('./src/routes/tasks');
 const timeRoutes = require('./src/routes/time');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8080;
 
 // Security middleware
 app.use(helmet());

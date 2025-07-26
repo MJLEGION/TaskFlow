@@ -1,0 +1,146 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [backend, frontend]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+
+      - name: Install dependencies
+        run: |
+          cd TaskFlow/${{ matrix.service }}
+          npm ci
+
+      - name: Run tests
+        run: |
+          cd TaskFlow/${{ matrix.service }}
+          npm test --if-present
+
+      - name: Run npm audit (dependency vulnerability scan)
+        run: |
+          cd TaskFlow/${{ matrix.service }}
+          npm audit --audit-level=high || true
+        continue-on-error: true
+        id: npm_audit
+
+      - name: Upload npm audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-${{ matrix.service }}
+          path: TaskFlow/${{ matrix.service }}/npm-debug.log
+          if-no-files-found: ignore
+
+  docker-build-and-scan:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [backend, frontend]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Azure Container Registry
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Build Docker image
+        run: |
+          docker build -f TaskFlow/Dockerfile.${{ matrix.service }} -t ${{ secrets.ACR_LOGIN_SERVER }}/taskflow-${{ matrix.service }}:${{ github.sha }} TaskFlow
+
+      - name: Scan Docker image with Trivy
+        uses: aquasecurity/trivy-action@v0.13.0
+        with:
+          image-ref: ${{ secrets.ACR_LOGIN_SERVER }}/taskflow-${{ matrix.service }}:${{ github.sha }}
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+        continue-on-error: true
+
+      - name: Push Docker image to ACR
+        run: |
+          docker push ${{ secrets.ACR_LOGIN_SERVER }}/taskflow-${{ matrix.service }}:${{ github.sha }}
+
+  deploy-staging:
+    if: github.ref == 'refs/heads/develop'
+    needs: docker-build-and-scan
+    runs-on: ubuntu-latest
+    environment:
+      name: 'staging'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+    steps:
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy Backend to Staging
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'taskflow-backend-staging'
+          images: ${{ secrets.ACR_LOGIN_SERVER }}/taskflow-backend:${{ github.sha }}
+
+      - name: Deploy Frontend to Staging
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'taskflow-frontend-staging'
+          images: ${{ secrets.ACR_LOGIN_SERVER }}/taskflow-frontend:${{ github.sha }}
+
+  deploy-production:
+    if: github.ref == 'refs/heads/main'
+    needs: docker-build-and-scan
+    runs-on: ubuntu-latest
+    environment:
+      name: 'production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+    steps:
+      - name: Wait for manual approval
+        uses: trstringer/manual-approval@v1
+        with:
+          secret: ${{ secrets.GITHUB_TOKEN }}
+          approvers: ${{ secrets.PROD_APPROVER }}
+          issue-title: 'Production Deployment Approval Required'
+          issue-body: 'Please approve production deployment.'
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy Backend to Production
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'taskflow-backend-prod'
+          images: ${{ secrets.ACR_LOGIN_SERVER }}/taskflow-backend:${{ github.sha }}
+
+      - name: Deploy Frontend to Production
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'taskflow-frontend-prod'
+          images: ${{ secrets.ACR_LOGIN_SERVER }}/taskflow-frontend:${{ github.sha }} 
