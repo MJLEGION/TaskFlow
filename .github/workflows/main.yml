@@ -17,9 +17,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: "18.x"
+          node-version: "20.x"
           cache: "npm"
           cache-dependency-path: TaskFlow/${{ matrix.service }}/package-lock.json
 
@@ -36,11 +36,7 @@ jobs:
       - name: Run tests
         run: |
           cd TaskFlow/${{ matrix.service }}
-          if [ "${{ matrix.service }}" = "frontend" ]; then
-            npm test -- --coverage --watchAll=false
-          else
-            npm test -- --coverage
-          fi
+          npm run test -- --coverage --watchAll=false
 
       - name: Upload coverage reports
         uses: codecov/codecov-action@v3
@@ -58,21 +54,21 @@ jobs:
       - name: Run npm audit (dependency vulnerability scan)
         run: |
           cd TaskFlow/${{ matrix.service }}
-          npm audit --audit-level=high || true
+          npm audit --audit-level=high --json > npm-audit-${{ matrix.service }}.json || true
         continue-on-error: true
-        id: npm_audit
 
       - name: Upload npm audit report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: npm-audit-${{ matrix.service }}
-          path: TaskFlow/${{ matrix.service }}/npm-debug.log
+          path: TaskFlow/${{ matrix.service }}/npm-audit-${{ matrix.service }}.json
           if-no-files-found: ignore
 
   docker-build-and-scan:
     needs: lint-and-test
     runs-on: ubuntu-latest
+    if: github.event_name == 'push'
     strategy:
       matrix:
         service: [backend, frontend]
@@ -92,28 +88,33 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -f TaskFlow/Dockerfile.${{ matrix.service }} -t ${{ secrets.ACR_LOGIN_SERVER }}/taskflow-${{ matrix.service }}:${{ github.sha }} TaskFlow
+          docker build -f TaskFlow/Dockerfile.${{ matrix.service }} -t ${{ secrets.ACR_LOGIN_SERVER }}/taskflow-${{ matrix.service }}:${{ github.sha }} TaskFlow/
 
       - name: Scan Docker image with Trivy
         uses: aquasecurity/trivy-action@v0.13.0
         with:
           image-ref: ${{ secrets.ACR_LOGIN_SERVER }}/taskflow-${{ matrix.service }}:${{ github.sha }}
-          format: "table"
-          exit-code: "1"
-          ignore-unfixed: true
+          format: "sarif"
+          output: "trivy-results-${{ matrix.service }}.sarif"
         continue-on-error: true
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: "trivy-results-${{ matrix.service }}.sarif"
 
       - name: Push Docker image to ACR
         run: |
           docker push ${{ secrets.ACR_LOGIN_SERVER }}/taskflow-${{ matrix.service }}:${{ github.sha }}
 
   deploy-staging:
-    if: github.ref == 'refs/heads/develop'
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
     needs: docker-build-and-scan
     runs-on: ubuntu-latest
     environment:
-      name: "staging"
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+      name: staging
+      url: https://taskflow-frontend-staging.azurewebsites.net
     steps:
       - name: Azure Login
         uses: azure/login@v2
@@ -135,20 +136,27 @@ jobs:
           images: ${{ secrets.ACR_LOGIN_SERVER }}/taskflow-frontend:${{ github.sha }}
 
   deploy-production:
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     needs: docker-build-and-scan
     runs-on: ubuntu-latest
     environment:
-      name: "production"
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+      name: production
+      url: https://taskflow-webapp-legion.azurewebsites.net
     steps:
       - name: Wait for manual approval
         uses: trstringer/manual-approval@v1
         with:
           secret: ${{ secrets.GITHUB_TOKEN }}
-          approvers: ${{ secrets.PROD_APPROVER }}
+          approvers: MJLEGION
           issue-title: "Production Deployment Approval Required"
-          issue-body: "Please approve production deployment."
+          issue-body: |
+            ## Production Deployment Request
+            
+            **Commit:** ${{ github.sha }}
+            **Branch:** ${{ github.ref }}
+            **Triggered by:** ${{ github.actor }}
+            
+            Please review and approve this production deployment.
 
       - name: Azure Login
         uses: azure/login@v2
@@ -160,11 +168,11 @@ jobs:
       - name: Deploy Backend to Production
         uses: azure/webapps-deploy@v3
         with:
-          app-name: "taskflow-backend-prod"
+          app-name: "taskflow-backend-legion"
           images: ${{ secrets.ACR_LOGIN_SERVER }}/taskflow-backend:${{ github.sha }}
 
       - name: Deploy Frontend to Production
         uses: azure/webapps-deploy@v3
         with:
-          app-name: "taskflow-frontend-prod"
+          app-name: "taskflow-webapp-legion"
           images: ${{ secrets.ACR_LOGIN_SERVER }}/taskflow-frontend:${{ github.sha }}
