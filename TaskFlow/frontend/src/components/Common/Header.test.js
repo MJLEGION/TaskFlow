@@ -1,10 +1,9 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { BrowserRouter } from 'react-router-dom';
 
-// Mock the Header component since we don't have the actual implementation
-const MockHeader = ({ user, onLogout }) => (
+// Simple Header component for testing
+const Header = ({ user, onLogout }) => (
   <header className="header">
     <div className="logo">TaskFlow</div>
     {user && (
@@ -14,12 +13,6 @@ const MockHeader = ({ user, onLogout }) => (
       </div>
     )}
   </header>
-);
-
-const HeaderWrapper = ({ children }) => (
-  <BrowserRouter>
-    {children}
-  </BrowserRouter>
 );
 
 describe('Header Component', () => {
@@ -36,57 +29,31 @@ describe('Header Component', () => {
   });
 
   it('renders TaskFlow logo', () => {
-    render(
-      <HeaderWrapper>
-        <MockHeader user={mockUser} onLogout={mockOnLogout} />
-      </HeaderWrapper>
-    );
-
+    render(<Header user={mockUser} onLogout={mockOnLogout} />);
     expect(screen.getByText('TaskFlow')).toBeInTheDocument();
   });
 
   it('displays user information when logged in', () => {
-    render(
-      <HeaderWrapper>
-        <MockHeader user={mockUser} onLogout={mockOnLogout} />
-      </HeaderWrapper>
-    );
-
+    render(<Header user={mockUser} onLogout={mockOnLogout} />);
     expect(screen.getByText('Welcome, Test User')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Logout' })).toBeInTheDocument();
   });
 
   it('does not display user section when not logged in', () => {
-    render(
-      <HeaderWrapper>
-        <MockHeader user={null} onLogout={mockOnLogout} />
-      </HeaderWrapper>
-    );
-
+    render(<Header user={null} onLogout={mockOnLogout} />);
     expect(screen.queryByText(/Welcome/)).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Logout' })).not.toBeInTheDocument();
   });
 
   it('calls onLogout when logout button is clicked', () => {
-    render(
-      <HeaderWrapper>
-        <MockHeader user={mockUser} onLogout={mockOnLogout} />
-      </HeaderWrapper>
-    );
-
+    render(<Header user={mockUser} onLogout={mockOnLogout} />);
     const logoutButton = screen.getByRole('button', { name: 'Logout' });
     fireEvent.click(logoutButton);
-
     expect(mockOnLogout).toHaveBeenCalledTimes(1);
   });
 
   it('has correct CSS classes', () => {
-    render(
-      <HeaderWrapper>
-        <MockHeader user={mockUser} onLogout={mockOnLogout} />
-      </HeaderWrapper>
-    );
-
+    render(<Header user={mockUser} onLogout={mockOnLogout} />);
     const header = screen.getByRole('banner');
     expect(header).toHaveClass('header');
   });

@@ -7,7 +7,7 @@ on:
     branches: [main, develop]
 
 jobs:
-  build-and-test:
+  lint-and-test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -19,17 +19,41 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18.x'
+          node-version: "18.x"
+          cache: "npm"
+          cache-dependency-path: TaskFlow/${{ matrix.service }}/package-lock.json
 
       - name: Install dependencies
         run: |
           cd TaskFlow/${{ matrix.service }}
           npm ci
 
+      - name: Run ESLint
+        run: |
+          cd TaskFlow/${{ matrix.service }}
+          npm run lint
+
       - name: Run tests
         run: |
           cd TaskFlow/${{ matrix.service }}
-          npm test --if-present
+          if [ "${{ matrix.service }}" = "frontend" ]; then
+            npm test -- --coverage --watchAll=false
+          else
+            npm test -- --coverage
+          fi
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          file: TaskFlow/${{ matrix.service }}/coverage/lcov.info
+          flags: ${{ matrix.service }}
+          name: ${{ matrix.service }}-coverage
+          fail_ci_if_error: false
+
+      - name: Build application
+        run: |
+          cd TaskFlow/${{ matrix.service }}
+          npm run build
 
       - name: Run npm audit (dependency vulnerability scan)
         run: |
@@ -47,7 +71,7 @@ jobs:
           if-no-files-found: ignore
 
   docker-build-and-scan:
-    needs: build-and-test
+    needs: lint-and-test
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -74,8 +98,8 @@ jobs:
         uses: aquasecurity/trivy-action@v0.13.0
         with:
           image-ref: ${{ secrets.ACR_LOGIN_SERVER }}/taskflow-${{ matrix.service }}:${{ github.sha }}
-          format: 'table'
-          exit-code: '1'
+          format: "table"
+          exit-code: "1"
           ignore-unfixed: true
         continue-on-error: true
 
@@ -88,7 +112,7 @@ jobs:
     needs: docker-build-and-scan
     runs-on: ubuntu-latest
     environment:
-      name: 'staging'
+      name: "staging"
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     steps:
       - name: Azure Login
@@ -101,13 +125,13 @@ jobs:
       - name: Deploy Backend to Staging
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'taskflow-backend-staging'
+          app-name: "taskflow-backend-staging"
           images: ${{ secrets.ACR_LOGIN_SERVER }}/taskflow-backend:${{ github.sha }}
 
       - name: Deploy Frontend to Staging
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'taskflow-frontend-staging'
+          app-name: "taskflow-frontend-staging"
           images: ${{ secrets.ACR_LOGIN_SERVER }}/taskflow-frontend:${{ github.sha }}
 
   deploy-production:
@@ -115,7 +139,7 @@ jobs:
     needs: docker-build-and-scan
     runs-on: ubuntu-latest
     environment:
-      name: 'production'
+      name: "production"
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     steps:
       - name: Wait for manual approval
@@ -123,8 +147,8 @@ jobs:
         with:
           secret: ${{ secrets.GITHUB_TOKEN }}
           approvers: ${{ secrets.PROD_APPROVER }}
-          issue-title: 'Production Deployment Approval Required'
-          issue-body: 'Please approve production deployment.'
+          issue-title: "Production Deployment Approval Required"
+          issue-body: "Please approve production deployment."
 
       - name: Azure Login
         uses: azure/login@v2
@@ -136,11 +160,11 @@ jobs:
       - name: Deploy Backend to Production
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'taskflow-backend-prod'
+          app-name: "taskflow-backend-prod"
           images: ${{ secrets.ACR_LOGIN_SERVER }}/taskflow-backend:${{ github.sha }}
 
       - name: Deploy Frontend to Production
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'taskflow-frontend-prod'
-          images: ${{ secrets.ACR_LOGIN_SERVER }}/taskflow-frontend:${{ github.sha }} 
+          app-name: "taskflow-frontend-prod"
+          images: ${{ secrets.ACR_LOGIN_SERVER }}/taskflow-frontend:${{ github.sha }}
