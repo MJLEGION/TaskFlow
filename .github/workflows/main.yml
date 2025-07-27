@@ -1,17 +1,13 @@
-name: CI/CD Pipeline
+name: Deploy to Azure
 
 on:
   push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main, develop]
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
-  lint-and-test:
+  build-and-deploy:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        service: [backend, frontend]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -21,173 +17,62 @@ jobs:
         with:
           node-version: "20.x"
 
-      - name: Check if service exists
+      - name: Install backend dependencies
         run: |
-          if [ ! -d "${{ matrix.service }}" ]; then
-            echo "Directory ${{ matrix.service }} does not exist"
-            ls -la
-            exit 1
-          fi
+          cd TaskFlow/backend
+          npm ci
 
-      - name: Install dependencies
+      - name: Install frontend dependencies
         run: |
-          cd ${{ matrix.service }}
-          if [ -f package-lock.json ]; then
-            npm ci
-          else
-            npm install
-          fi
+          cd TaskFlow/frontend
+          npm ci
 
-      - name: Run ESLint (if configured)
+      - name: Build frontend
         run: |
-          cd ${{ matrix.service }}
-          if npm run lint --silent > /dev/null 2>&1; then
-            npm run lint
-          else
-            echo "No lint script found for ${{ matrix.service }}, skipping..."
-          fi
-        continue-on-error: true
+          cd TaskFlow/frontend
+          npm run build
 
-      - name: Run tests
+      - name: Prepare deployment package
         run: |
-          cd ${{ matrix.service }}
-          if npm run test --silent > /dev/null 2>&1; then
-            npm run test -- --coverage --watchAll=false --passWithNoTests
-          else
-            echo "No test script found for ${{ matrix.service }}, skipping..."
-          fi
-        continue-on-error: true
+          # Create deployment directory
+          mkdir -p deploy
 
-      - name: Build application
-        run: |
-          cd ${{ matrix.service }}
-          if npm run build --silent > /dev/null 2>&1; then
-            npm run build
-          else
-            echo "No build script found for ${{ matrix.service }}, skipping..."
-          fi
-        continue-on-error: true
+          # Copy backend files
+          cp -r TaskFlow/backend/* deploy/
 
-      - name: Run npm audit (dependency scan)
-        run: |
-          cd ${{ matrix.service }}
-          npm audit --audit-level=high || echo "Vulnerabilities found, but continuing..."
-        continue-on-error: true
+          # Copy built frontend to backend's public directory
+          mkdir -p deploy/public
+          cp -r TaskFlow/frontend/build/* deploy/public/
 
-  docker-build-and-scan:
-    needs: lint-and-test
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
-    strategy:
-      matrix:
-        service: [backend, frontend]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+          # Create web.config for Azure App Service
+          cat > deploy/web.config << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <configuration>
+            <system.webServer>
+              <handlers>
+                <add name="iisnode" path="server.js" verb="*" modules="iisnode"/>
+              </handlers>
+              <rewrite>
+                <rules>
+                  <rule name="StaticContent">
+                    <action type="Rewrite" url="public{REQUEST_URI}"/>
+                  </rule>
+                  <rule name="DynamicContent">
+                    <conditions>
+                      <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="True"/>
+                    </conditions>
+                    <action type="Rewrite" url="server.js"/>
+                  </rule>
+                </rules>
+              </rewrite>
+              <iisnode watchedFiles="web.config;*.js"/>
+            </system.webServer>
+          </configuration>
+          EOF
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to Azure Container Registry
-        if: ${{ secrets.ACR_LOGIN_SERVER }}
-        uses: azure/docker-login@v1
-        with:
-          login-server: ${{ secrets.ACR_LOGIN_SERVER }}
-          username: ${{ secrets.ACR_USERNAME }}
-          password: ${{ secrets.ACR_PASSWORD }}
-
-      - name: Build Docker image
-        run: |
-          if [ -n "${{ secrets.ACR_LOGIN_SERVER }}" ]; then
-            docker build -f Dockerfile.${{ matrix.service }} -t ${{ secrets.ACR_LOGIN_SERVER }}/taskflow-${{ matrix.service }}:${{ github.sha }} .
-          else
-            docker build -f Dockerfile.${{ matrix.service }} -t taskflow-${{ matrix.service }}:${{ github.sha }} .
-          fi
-
-      - name: Scan Docker image with Trivy
-        uses: aquasecurity/trivy-action@v0.13.0
-        with:
-          image-ref: ${{ secrets.ACR_LOGIN_SERVER && format('{0}/taskflow-{1}:{2}', secrets.ACR_LOGIN_SERVER, matrix.service, github.sha) || format('taskflow-{0}:{1}', matrix.service, github.sha) }}
-          format: "table"
-          exit-code: "0"
-        continue-on-error: true
-
-      - name: Push Docker image to ACR
-        if: ${{ secrets.ACR_LOGIN_SERVER }}
-        run: |
-          docker push ${{ secrets.ACR_LOGIN_SERVER }}/taskflow-${{ matrix.service }}:${{ github.sha }}
-
-  deploy-staging:
-    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
-    needs: docker-build-and-scan
-    runs-on: ubuntu-latest
-    environment:
-      name: staging
-      url: https://taskflow-frontend-staging.azurewebsites.net
-    steps:
-      - name: Azure Login
-        if: ${{ secrets.AZURE_CLIENT_ID }}
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Deploy Backend to Staging
-        if: ${{ secrets.AZURE_CLIENT_ID && secrets.ACR_LOGIN_SERVER }}
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: "taskflow-backend-staging"
-          images: ${{ secrets.ACR_LOGIN_SERVER }}/taskflow-backend:${{ github.sha }}
-
-      - name: Deploy Frontend to Staging
-        if: ${{ secrets.AZURE_CLIENT_ID && secrets.ACR_LOGIN_SERVER }}
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: "taskflow-frontend-staging"
-          images: ${{ secrets.ACR_LOGIN_SERVER }}/taskflow-frontend:${{ github.sha }}
-
-  deploy-production:
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    needs: docker-build-and-scan
-    runs-on: ubuntu-latest
-    environment:
-      name: production
-      url: https://taskflow-webapp-legion.azurewebsites.net
-    steps:
-      - name: Wait for manual approval
-        uses: trstringer/manual-approval@v1
-        with:
-          secret: ${{ secrets.GITHUB_TOKEN }}
-          approvers: MJLEGION
-          issue-title: "Production Deployment Approval Required"
-          issue-body: |
-            ## Production Deployment Request
-
-            **Commit:** ${{ github.sha }}
-            **Branch:** ${{ github.ref }}
-            **Triggered by:** ${{ github.actor }}
-
-            Please review and approve this production deployment.
-
-      - name: Azure Login
-        if: ${{ secrets.AZURE_CLIENT_ID }}
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Deploy Backend to Production
-        if: ${{ secrets.AZURE_CLIENT_ID && secrets.ACR_LOGIN_SERVER }}
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: "taskflow-backend-legion"
-          images: ${{ secrets.ACR_LOGIN_SERVER }}/taskflow-backend:${{ github.sha }}
-
-      - name: Deploy Frontend to Production
-        if: ${{ secrets.AZURE_CLIENT_ID && secrets.ACR_LOGIN_SERVER }}
+      - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: "taskflow-webapp-legion"
-          images: ${{ secrets.ACR_LOGIN_SERVER }}/taskflow-frontend:${{ github.sha }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: "./deploy"
