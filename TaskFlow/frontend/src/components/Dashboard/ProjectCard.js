@@ -5,14 +5,14 @@ import { Calendar, Users, CheckCircle, Clock } from 'lucide-react';
 const ProjectCard = ({ project, compact = false }) => {
   const getStatusColor = (status) => {
     switch (status) {
-      case 'active':
-        return 'bg-green-100 text-green-800';
-      case 'on-hold':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'completed':
-        return 'bg-blue-100 text-blue-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+    case 'active':
+      return 'bg-green-100 text-green-800';
+    case 'on-hold':
+      return 'bg-yellow-100 text-yellow-800';
+    case 'completed':
+      return 'bg-blue-100 text-blue-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -27,7 +27,7 @@ const ProjectCard = ({ project, compact = false }) => {
 
   if (compact) {
     return (
-      <Link 
+      <Link
         to={`/projects/${project.id}`}
         className="block p-4 border border-gray-200 rounded-lg hover:border-primary-300 hover:shadow-sm transition-all duration-200"
       >
@@ -57,7 +57,7 @@ const ProjectCard = ({ project, compact = false }) => {
       <div className="p-6">
         <div className="flex items-center justify-between">
           <div className="flex-1 min-w-0">
-            <Link 
+            <Link
               to={`/projects/${project.id}`}
               className="text-lg font-semibold text-gray-900 hover:text-primary-600 transition-colors"
             >
@@ -98,7 +98,7 @@ const ProjectCard = ({ project, compact = false }) => {
               <span className="font-medium">{project.progress}%</span>
             </div>
             <div className="mt-1 w-full bg-gray-200 rounded-full h-2">
-              <div 
+              <div
                 className="bg-primary-600 h-2 rounded-full transition-all duration-300"
                 style={{ width: `${project.progress}%` }}
               ></div>

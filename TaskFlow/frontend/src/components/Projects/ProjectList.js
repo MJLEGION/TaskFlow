@@ -130,8 +130,8 @@ const ProjectList = () => {
       {filteredProjects.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProjects.map((project) => (
-            <ProjectCard 
-              key={project.id} 
+            <ProjectCard
+              key={project.id}
               project={project}
               onDelete={() => handleProjectDeleted(project.id)}
             />
@@ -144,7 +144,7 @@ const ProjectList = () => {
           </div>
           <h3 className="mt-2 text-sm font-medium text-gray-900">No projects found</h3>
           <p className="mt-1 text-sm text-gray-500">
-            {searchTerm || statusFilter !== 'all' 
+            {searchTerm || statusFilter !== 'all'
               ? 'Try adjusting your search or filter criteria.'
               : 'Get started by creating your first project.'
             }

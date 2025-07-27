@@ -25,7 +25,7 @@ const Register = ({ onLogin }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (formData.password !== formData.confirmPassword) {
       toast.error('Passwords do not match');
       return;
@@ -37,7 +37,7 @@ const Register = ({ onLogin }) => {
       const { confirmPassword, ...registerData } = formData;
       const response = await authAPI.register(registerData);
       const { token, user } = response.data;
-      
+
       setToken(token);
       onLogin(user);
       toast.success('Registration successful!');
@@ -100,7 +100,7 @@ const Register = ({ onLogin }) => {
                 />
               </div>
             </div>
-            
+
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-700">
                 Username

@@ -1,12 +1,12 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { 
-  Home, 
-  FolderOpen, 
-  CheckSquare, 
-  Clock, 
-  BarChart3, 
-  Settings 
+import {
+  Home,
+  FolderOpen,
+  CheckSquare,
+  Clock,
+  BarChart3,
+  Settings
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -42,7 +42,7 @@ const Sidebar = () => {
             </NavLink>
           ))}
         </div>
-        
+
         <div className="mt-8 pt-8 border-t border-gray-200">
           <div className="space-y-1">
             <NavLink

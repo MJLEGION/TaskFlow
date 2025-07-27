@@ -26,7 +26,7 @@ const Login = ({ onLogin }) => {
     try {
       const response = await authAPI.login(formData);
       const { token, user } = response.data;
-      
+
       setToken(token);
       onLogin(user);
       toast.success('Login successful!');

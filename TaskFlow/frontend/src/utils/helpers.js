@@ -8,7 +8,7 @@ export const formatDate = (date) => {
     if (!date) return 'Invalid Date';
     const dateObj = new Date(date);
     if (isNaN(dateObj.getTime())) return 'Invalid Date';
-    
+
     return dateObj.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -26,7 +26,7 @@ export const formatDate = (date) => {
  */
 export const validateEmail = (email) => {
   if (!email || typeof email !== 'string') return false;
-  
+
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 };
@@ -39,9 +39,9 @@ export const validateEmail = (email) => {
  */
 export const truncateText = (text, maxLength = 100) => {
   if (!text || typeof text !== 'string') return '';
-  
+
   if (text.length <= maxLength) return text;
-  
+
   return text.substring(0, maxLength) + '...';
 };
 
@@ -60,13 +60,13 @@ export const generateId = () => {
  */
 export const formatDuration = (minutes) => {
   if (!minutes || minutes < 0) return '0m';
-  
+
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
-  
+
   if (hours === 0) return `${mins}m`;
   if (mins === 0) return `${hours}h`;
-  
+
   return `${hours}h ${mins}m`;
 };
 
@@ -77,14 +77,14 @@ export const formatDuration = (minutes) => {
  */
 export const getPriorityColor = (priority) => {
   switch (priority?.toLowerCase()) {
-    case 'high':
-      return 'text-red-600 bg-red-100';
-    case 'medium':
-      return 'text-yellow-600 bg-yellow-100';
-    case 'low':
-      return 'text-green-600 bg-green-100';
-    default:
-      return 'text-gray-600 bg-gray-100';
+  case 'high':
+    return 'text-red-600 bg-red-100';
+  case 'medium':
+    return 'text-yellow-600 bg-yellow-100';
+  case 'low':
+    return 'text-green-600 bg-green-100';
+  default:
+    return 'text-gray-600 bg-gray-100';
   }
 };
 
@@ -95,14 +95,14 @@ export const getPriorityColor = (priority) => {
  */
 export const getStatusColor = (status) => {
   switch (status?.toLowerCase()) {
-    case 'completed':
-      return 'text-green-600 bg-green-100';
-    case 'in progress':
-      return 'text-blue-600 bg-blue-100';
-    case 'todo':
-      return 'text-gray-600 bg-gray-100';
-    default:
-      return 'text-gray-600 bg-gray-100';
+  case 'completed':
+    return 'text-green-600 bg-green-100';
+  case 'in progress':
+    return 'text-blue-600 bg-blue-100';
+  case 'todo':
+    return 'text-gray-600 bg-gray-100';
+  default:
+    return 'text-gray-600 bg-gray-100';
   }
 };
 

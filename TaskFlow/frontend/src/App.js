@@ -49,11 +49,10 @@ const EnhancedLogin = ({ onLogin }) => {
       const userData = {
         email: formData.email,
         name: isRegistering ? formData.name : 'User',
+        firstName: isRegistering ? formData.name.split(' ')[0] : 'User',
+        lastName: isRegistering ? formData.name.split(' ')[1] || '' : '',
         id: Math.random().toString(36).substr(2, 9)
       };
-      
-      // Store user data in localStorage (temporary solution)
-      localStorage.setItem('taskflow_user', JSON.stringify(userData));
       
       onLogin(userData);
       setLoading(false);
@@ -263,7 +262,7 @@ const EnhancedLogin = ({ onLogin }) => {
               {/* Premium submit button */}
               <div className="pt-4">
                 <button
-                  onClick={handleSubmit}
+                  type="submit"
                   disabled={loading}
                   className="group relative w-full py-4 px-6 overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white font-semibold text-lg tracking-wide shadow-2xl transition-all duration-300 hover:shadow-blue-500/25 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -534,11 +533,19 @@ const EnhancedDashboard = ({ isDarkMode }) => {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {statCards.map((stat) => (
-          <div key={stat.name} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all">
+          <div key={stat.name} className={`rounded-2xl p-6 shadow-sm border transition-all hover:shadow-md ${
+            isDarkMode 
+              ? 'bg-gray-800 border-gray-700' 
+              : 'bg-white border-gray-100'
+          }`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">{stat.name}</p>
-                <p className="text-3xl font-bold text-gray-900 mt-1">{stat.value}</p>
+                <p className={`text-sm font-medium ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}>{stat.name}</p>
+                <p className={`text-3xl font-bold mt-1 ${
+                  isDarkMode ? 'text-white' : 'text-gray-900'
+                }`}>{stat.value}</p>
               </div>
               <div className={`p-3 rounded-xl bg-gradient-to-r ${stat.color}`}>
                 <stat.icon className="h-6 w-6 text-white" />
@@ -551,10 +558,18 @@ const EnhancedDashboard = ({ isDarkMode }) => {
       {/* Projects and Tasks Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Recent Projects */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
-          <div className="p-6 border-b border-gray-100">
+        <div className={`rounded-2xl shadow-sm border ${
+          isDarkMode 
+            ? 'bg-gray-800 border-gray-700' 
+            : 'bg-white border-gray-100'
+        }`}>
+          <div className={`p-6 border-b ${
+            isDarkMode ? 'border-gray-700' : 'border-gray-100'
+          }`}>
             <div className="flex items-center justify-between">
-              <h3 className="text-xl font-semibold text-gray-900">Recent Projects</h3>
+              <h3 className={`text-xl font-semibold ${
+                isDarkMode ? 'text-white' : 'text-gray-900'
+              }`}>Recent Projects</h3>
               <Link to="/projects" className="flex items-center text-blue-600 hover:text-blue-700 font-medium">
                 View all <ArrowRight className="h-4 w-4 ml-1" />
               </Link>
@@ -562,19 +577,29 @@ const EnhancedDashboard = ({ isDarkMode }) => {
           </div>
           <div className="p-6 space-y-4">
             {projects.map((project) => (
-              <div key={project.id} className="p-4 border border-gray-100 rounded-xl hover:border-gray-200 transition-all">
+              <div key={project.id} className={`p-4 border rounded-xl transition-all hover:border-gray-200 ${
+                isDarkMode ? 'border-gray-700 hover:border-gray-600' : 'border-gray-100'
+              }`}>
                 <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-semibold text-gray-900">{project.name}</h4>
-                  <span className="text-sm text-gray-500">{project.tasks} tasks</span>
+                  <h4 className={`font-semibold ${
+                    isDarkMode ? 'text-white' : 'text-gray-900'
+                  }`}>{project.name}</h4>
+                  <span className={`text-sm ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                  }`}>{project.tasks} tasks</span>
                 </div>
                 <div className="flex items-center space-x-3">
-                  <div className="flex-1 bg-gray-200 rounded-full h-2">
+                  <div className={`flex-1 rounded-full h-2 ${
+                    isDarkMode ? 'bg-gray-700' : 'bg-gray-200'
+                  }`}>
                     <div 
                       className={`h-2 rounded-full bg-gradient-to-r ${project.color}`}
                       style={{ width: `${project.progress}%` }}
                     ></div>
                   </div>
-                  <span className="text-sm font-medium text-gray-700">{project.progress}%</span>
+                  <span className={`text-sm font-medium ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                  }`}>{project.progress}%</span>
                 </div>
               </div>
             ))}
@@ -582,10 +607,18 @@ const EnhancedDashboard = ({ isDarkMode }) => {
         </div>
 
         {/* Recent Tasks */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
-          <div className="p-6 border-b border-gray-100">
+        <div className={`rounded-2xl shadow-sm border ${
+          isDarkMode 
+            ? 'bg-gray-800 border-gray-700' 
+            : 'bg-white border-gray-100'
+        }`}>
+          <div className={`p-6 border-b ${
+            isDarkMode ? 'border-gray-700' : 'border-gray-100'
+          }`}>
             <div className="flex items-center justify-between">
-              <h3 className="text-xl font-semibold text-gray-900">Active Tasks</h3>
+              <h3 className={`text-xl font-semibold ${
+                isDarkMode ? 'text-white' : 'text-gray-900'
+              }`}>Active Tasks</h3>
               <Link to="/tasks" className="flex items-center text-blue-600 hover:text-blue-700 font-medium">
                 View all <ArrowRight className="h-4 w-4 ml-1" />
               </Link>
@@ -593,12 +626,18 @@ const EnhancedDashboard = ({ isDarkMode }) => {
           </div>
           <div className="p-6 space-y-4">
             {tasks.map((task) => (
-              <div key={task.id} className="p-4 border border-gray-100 rounded-xl hover:border-gray-200 transition-all">
+              <div key={task.id} className={`p-4 border rounded-xl transition-all hover:border-gray-200 ${
+                isDarkMode ? 'border-gray-700 hover:border-gray-600' : 'border-gray-100'
+              }`}>
                 <div className="flex items-start space-x-3">
                   <input type="checkbox" className="mt-1 rounded border-gray-300" />
                   <div className="flex-1">
-                    <h4 className="font-medium text-gray-900">{task.title}</h4>
-                    <p className="text-sm text-gray-500 mt-1">{task.project}</p>
+                    <h4 className={`font-medium ${
+                      isDarkMode ? 'text-white' : 'text-gray-900'
+                    }`}>{task.title}</h4>
+                    <p className={`text-sm mt-1 ${
+                      isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                    }`}>{task.project}</p>
                   </div>
                   <span className={`px-2 py-1 rounded-lg text-xs font-medium border ${getPriorityColor(task.priority)}`}>
                     {task.priority}
@@ -1081,7 +1120,7 @@ const ProjectsPage = ({ isDarkMode }) => {
 
 // Tasks Page Component
 const TasksPage = ({ isDarkMode }) => {
-  const [tasks, setTasks] = useState([
+  const [tasks] = useState([
     {
       id: 1,
       title: 'Design homepage mockup',
@@ -1471,7 +1510,9 @@ const TimeTrackingPage = ({ isDarkMode }) => {
             ? 'bg-gray-800 border-gray-700' 
             : 'bg-white border-gray-200'
         }`}>
-          <div className="p-6 border-b border-gray-200">
+          <div className={`p-6 border-b ${
+            isDarkMode ? 'border-gray-700' : 'border-gray-200'
+          }`}>
             <h3 className={`text-xl font-semibold ${
               isDarkMode ? 'text-white' : 'text-gray-900'
             }`}>Recent Time Entries</h3>

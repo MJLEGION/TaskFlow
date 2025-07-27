@@ -20,7 +20,7 @@ describe('Login Component', () => {
 
   test('renders login form correctly', () => {
     render(<LoginWrapper />);
-    
+
     expect(screen.getByText('TaskFlow')).toBeInTheDocument();
     expect(screen.getByText('Elevate Your Productivity')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Enter your email')).toBeInTheDocument();
@@ -30,15 +30,15 @@ describe('Login Component', () => {
 
   test('has correct form structure', () => {
     render(<LoginWrapper />);
-    
+
     // Instead of looking for role="form", look for the form element directly
     const form = screen.getByRole('button', { name: 'Sign In' }).closest('form');
     expect(form).toBeInTheDocument();
-    
+
     const emailInput = screen.getByPlaceholderText('Enter your email');
     const passwordInput = screen.getByPlaceholderText('Enter your password');
     const submitButton = screen.getByRole('button', { name: 'Sign In' });
-    
+
     expect(emailInput).toBeInTheDocument();
     expect(passwordInput).toBeInTheDocument();
     expect(submitButton).toBeInTheDocument();
@@ -47,13 +47,13 @@ describe('Login Component', () => {
 
   test('updates input values when typing', () => {
     render(<LoginWrapper />);
-    
+
     const emailInput = screen.getByPlaceholderText('Enter your email');
     const passwordInput = screen.getByPlaceholderText('Enter your password');
-    
+
     fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
     fireEvent.change(passwordInput, { target: { value: 'password123' } });
-    
+
     expect(emailInput.value).toBe('test@example.com');
     expect(passwordInput.value).toBe('password123');
   });
@@ -69,15 +69,15 @@ describe('Login Component', () => {
     });
 
     render(<LoginWrapper />);
-    
+
     const emailInput = screen.getByPlaceholderText('Enter your email');
     const passwordInput = screen.getByPlaceholderText('Enter your password');
     const submitButton = screen.getByRole('button', { name: 'Sign In' });
-    
+
     fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
     fireEvent.change(passwordInput, { target: { value: 'password123' } });
     fireEvent.click(submitButton);
-    
+
     await waitFor(() => {
       expect(fetch).toHaveBeenCalledWith('/api/auth/login', {
         method: 'POST',
@@ -101,15 +101,15 @@ describe('Login Component', () => {
     });
 
     render(<LoginWrapper />);
-    
+
     const emailInput = screen.getByPlaceholderText('Enter your email');
     const passwordInput = screen.getByPlaceholderText('Enter your password');
     const submitButton = screen.getByRole('button', { name: 'Sign In' });
-    
+
     fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
     fireEvent.change(passwordInput, { target: { value: 'wrongpassword' } });
     fireEvent.click(submitButton);
-    
+
     await waitFor(() => {
       expect(screen.getByText('Invalid credentials')).toBeInTheDocument();
     });
@@ -119,15 +119,15 @@ describe('Login Component', () => {
     fetch.mockImplementation(() => new Promise(resolve => setTimeout(resolve, 100)));
 
     render(<LoginWrapper />);
-    
+
     const emailInput = screen.getByPlaceholderText('Enter your email');
     const passwordInput = screen.getByPlaceholderText('Enter your password');
     const submitButton = screen.getByRole('button', { name: 'Sign In' });
-    
+
     fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
     fireEvent.change(passwordInput, { target: { value: 'password123' } });
     fireEvent.click(submitButton);
-    
+
     // Check if button shows loading state (this depends on your implementation)
     // You might need to adjust this based on how your component handles loading
     expect(submitButton).toBeInTheDocument();

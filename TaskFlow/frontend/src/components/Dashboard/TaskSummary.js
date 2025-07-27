@@ -5,25 +5,25 @@ import { Clock, AlertCircle, CheckCircle, Calendar } from 'lucide-react';
 const TaskSummary = ({ task }) => {
   const getPriorityColor = (priority) => {
     switch (priority) {
-      case 'high':
-        return 'text-red-600';
-      case 'medium':
-        return 'text-yellow-600';
-      case 'low':
-        return 'text-green-600';
-      default:
-        return 'text-gray-600';
+    case 'high':
+      return 'text-red-600';
+    case 'medium':
+      return 'text-yellow-600';
+    case 'low':
+      return 'text-green-600';
+    default:
+      return 'text-gray-600';
     }
   };
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'completed':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'in-progress':
-        return <Clock className="h-4 w-4 text-blue-500" />;
-      default:
-        return <AlertCircle className="h-4 w-4 text-gray-400" />;
+    case 'completed':
+      return <CheckCircle className="h-4 w-4 text-green-500" />;
+    case 'in-progress':
+      return <Clock className="h-4 w-4 text-blue-500" />;
+    default:
+      return <AlertCircle className="h-4 w-4 text-gray-400" />;
     }
   };
 
@@ -39,7 +39,7 @@ const TaskSummary = ({ task }) => {
     if (diffDays === -1) return 'Yesterday';
     if (diffDays < -1) return `${Math.abs(diffDays)} days overdue`;
     if (diffDays > 1) return `${diffDays} days left`;
-    
+
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric'
@@ -53,7 +53,7 @@ const TaskSummary = ({ task }) => {
       <div className="flex items-center space-x-3 flex-1 min-w-0">
         {getStatusIcon(task.status)}
         <div className="flex-1 min-w-0">
-          <Link 
+          <Link
             to={`/tasks/${task.id}`}
             className="text-sm font-medium text-gray-900 hover:text-primary-600 transition-colors block truncate"
           >
@@ -73,7 +73,7 @@ const TaskSummary = ({ task }) => {
             {task.priority.toUpperCase()}
           </span>
         )}
-        
+
         {task.dueDate && (
           <div className={`flex items-center text-xs ${isOverdue ? 'text-red-600' : 'text-gray-500'}`}>
             <Calendar className="h-3 w-3 mr-1" />
