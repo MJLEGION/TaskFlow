@@ -44,6 +44,89 @@ jobs:
           mkdir -p deploy/public
           cp -r TaskFlow/frontend/build/* deploy/public/
 
+          # Create a simple Express server that serves both API and frontend
+          cat > deploy/server.js << 'EOF'
+          const express = require('express');
+          const path = require('path');
+          const cors = require('cors');
+          const helmet = require('helmet');
+          const rateLimit = require('express-rate-limit');
+          require('dotenv').config();
+
+          const app = express();
+          const PORT = process.env.PORT || 8080;
+
+          // Security middleware
+          app.use(helmet({
+            contentSecurityPolicy: false // Disable for React app
+          }));
+
+          // CORS middleware
+          app.use(cors());
+
+          // Rate limiting
+          const limiter = rateLimit({
+            windowMs: 15 * 60 * 1000,
+            max: 100
+          });
+          app.use(limiter);
+
+          // Body parsing
+          app.use(express.json());
+          app.use(express.urlencoded({ extended: true }));
+
+          // Serve static files from React build
+          app.use(express.static(path.join(__dirname, 'public')));
+
+          // API Routes
+          app.get('/api/health', (req, res) => {
+            res.json({ 
+              status: 'OK', 
+              timestamp: new Date().toISOString(),
+              message: 'TaskFlow is running!'
+            });
+          });
+
+          app.get('/api/projects', (req, res) => {
+            res.json({ 
+              projects: [
+                { id: 1, name: 'Sample Project', description: 'Demo project' }
+              ]
+            });
+          });
+
+          app.get('/api/tasks', (req, res) => {
+            res.json({ 
+              tasks: [
+                { id: 1, title: 'Sample Task', status: 'todo', projectId: 1 }
+              ]
+            });
+          });
+
+          // Catch all API routes
+          app.use('/api/*', (req, res) => {
+            res.json({ 
+              message: 'API endpoint placeholder',
+              endpoint: req.originalUrl
+            });
+          });
+
+          // Serve React app for all other routes
+          app.get('*', (req, res) => {
+            res.sendFile(path.join(__dirname, 'public', 'index.html'));
+          });
+
+          // Error handling
+          app.use((err, req, res, next) => {
+            console.error(err.stack);
+            res.status(500).json({ error: 'Something went wrong!' });
+          });
+
+          app.listen(PORT, () => {
+            console.log(`🚀 TaskFlow running on port ${PORT}`);
+          });
+          EOF
+
           # Create web.config for Azure App Service
           cat > deploy/web.config << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
@@ -54,9 +137,6 @@ jobs:
               </handlers>
               <rewrite>
                 <rules>
-                  <rule name="StaticContent">
-                    <action type="Rewrite" url="public{REQUEST_URI}"/>
-                  </rule>
                   <rule name="DynamicContent">
                     <conditions>
                       <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="True"/>
