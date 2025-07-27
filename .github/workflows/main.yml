@@ -145,7 +145,7 @@ jobs:
         if: ${{ secrets.AZURE_CLIENT_ID && secrets.ACR_LOGIN_SERVER }}
         uses: azure/webapps-deploy@v3
         with:
-          app-name: "taskflow-frontend-staging"  
+          app-name: "taskflow-frontend-staging"
           images: ${{ secrets.ACR_LOGIN_SERVER }}/taskflow-frontend:${{ github.sha }}
 
   deploy-production:
@@ -164,11 +164,11 @@ jobs:
           issue-title: "Production Deployment Approval Required"
           issue-body: |
             ## Production Deployment Request
-            
+
             **Commit:** ${{ github.sha }}
             **Branch:** ${{ github.ref }}
             **Triggered by:** ${{ github.actor }}
-            
+
             Please review and approve this production deployment.
 
       - name: Azure Login
@@ -185,10 +185,3 @@ jobs:
         with:
           app-name: "taskflow-backend-legion"
           images: ${{ secrets.ACR_LOGIN_SERVER }}/taskflow-backend:${{ github.sha }}
-
-      - name: Deploy Frontend to Production
-        if: ${{ secrets.AZURE_CLIENT_ID && secrets.ACR_LOGIN_SERVER }}
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: "taskflow-webapp-legion"
-          images: ${{ secrets.ACR_LOGIN_SERVER }}/taskflow-frontend:${{ github.sha }}
