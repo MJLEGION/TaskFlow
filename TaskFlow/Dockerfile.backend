@@ -1,58 +1,12 @@
-# Multi-stage build for TaskFlow Backend
-FROM node:20-alpine AS base
+FROM node:20-alpine
 
-# Install curl for health checks
-RUN apk add --no-cache curl
-
-# Set working directory
 WORKDIR /app
 
-# Copy package files
 COPY backend/package*.json ./
+RUN npm ci --only=production
 
-# Install dependencies
-RUN npm ci --only=production && npm cache clean --force
+COPY backend/ .
 
-# Development stage
-FROM base AS development
-RUN npm ci
-COPY backend/ ./
-EXPOSE 5000
-CMD ["npm", "run", "dev"]
+EXPOSE 8080
 
-# Production build stage
-FROM base AS build
-COPY backend/ ./
-RUN npm run build 2>/dev/null || echo "No build script found, using source files directly"
-
-# Production stage
-FROM node:20-alpine AS production
-
-# Install curl for health checks
-RUN apk add --no-cache curl
-
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S taskflow -u 1001
-
-WORKDIR /app
-
-# Copy production dependencies
-COPY --from=base /app/node_modules ./node_modules
-COPY --from=base /app/package*.json ./
-
-# Copy application code
-COPY --chown=taskflow:nodejs backend/ ./
-
-# Switch to non-root user
-USER taskflow
-
-# Expose port
-EXPOSE 5000
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:5000/api/health || exit 1
-
-# Start the application
 CMD ["npm", "start"]
