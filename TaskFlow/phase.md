@@ -10,7 +10,7 @@
 
 ## Screenshots of Provisioned Resources
 
-[](https://photos.app.goo.gl/WyxBApMdrCxFvFjCA)
+[](https://photos.app.goo.gl/vzNpQrvTfyGmSGFC7)
 
 ---
 

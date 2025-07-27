@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, NavLink, Link } from 'react-router-dom';
-import { 
-  Bell, Search, User, LogOut, Settings, Clock, CheckCircle, AlertCircle, 
+import {
+  Bell, Search, User, LogOut, Settings, Clock, CheckCircle, AlertCircle,
   FolderOpen, Home, CheckSquare, BarChart3, ArrowRight, Eye, EyeOff, Sun, Moon,
-  Plus, Edit, Trash2, Calendar, Flag, Play, Pause, Square, PieChart, TrendingUp,
-  Filter, MoreHorizontal, X, Save, Users, Target, Timer
+  Plus, Edit, Trash2, Calendar, Play, Pause, Square, PieChart, TrendingUp,
+  Filter, X, Save, Target
 } from 'lucide-react';
 import './App.css';
 
@@ -20,13 +20,13 @@ const EnhancedLogin = ({ onLogin }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     setError('');
-    
+
     // Basic validation
     if (!formData.email || !formData.password) {
       setError('Please fill in all required fields');
       return;
     }
-    
+
     if (isRegistering) {
       if (!formData.name) {
         setError('Name is required for registration');
@@ -41,19 +41,20 @@ const EnhancedLogin = ({ onLogin }) => {
         return;
       }
     }
-    
+
     setLoading(true);
-    
+
     // Simulate authentication process
     setTimeout(() => {
       const userData = {
         email: formData.email,
         name: isRegistering ? formData.name : 'User',
-        firstName: isRegistering ? formData.name.split(' ')[0] : 'User',
-        lastName: isRegistering ? formData.name.split(' ')[1] || '' : '',
         id: Math.random().toString(36).substr(2, 9)
       };
-      
+
+      // Store user data in localStorage (temporary solution)
+      localStorage.setItem('taskflow_user', JSON.stringify(userData));
+
       onLogin(userData);
       setLoading(false);
     }, 1500);
@@ -67,41 +68,41 @@ const EnhancedLogin = ({ onLogin }) => {
 
   return (
     <div className={`min-h-screen flex items-center justify-center p-4 relative overflow-hidden transition-all duration-500 ${
-      isDarkMode 
-        ? 'bg-gradient-to-br from-slate-900 via-gray-900 to-black' 
+      isDarkMode
+        ? 'bg-gradient-to-br from-slate-900 via-gray-900 to-black'
         : 'bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50'
     }`}>
       {/* Theme Toggle Button */}
       <button
         onClick={() => setIsDarkMode(!isDarkMode)}
         className={`fixed top-6 right-6 z-50 p-3 rounded-2xl backdrop-blur-xl border transition-all duration-300 hover:scale-110 ${
-          isDarkMode 
-            ? 'bg-white/10 border-white/20 text-white hover:bg-white/20' 
+          isDarkMode
+            ? 'bg-white/10 border-white/20 text-white hover:bg-white/20'
             : 'bg-black/10 border-black/20 text-gray-800 hover:bg-black/20'
         }`}
       >
         {isDarkMode ? <Sun className="h-6 w-6" /> : <Moon className="h-6 w-6" />}
       </button>
-      
+
       {/* Animated background elements */}
       <div className="absolute inset-0">
         <div className={`absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse ${
-          isDarkMode 
-            ? 'bg-gradient-to-r from-blue-600/20 to-purple-600/20' 
+          isDarkMode
+            ? 'bg-gradient-to-r from-blue-600/20 to-purple-600/20'
             : 'bg-gradient-to-r from-blue-300/30 to-purple-300/30'
         }`}></div>
         <div className={`absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full blur-3xl animate-pulse delay-1000 ${
-          isDarkMode 
-            ? 'bg-gradient-to-r from-purple-600/20 to-pink-600/20' 
+          isDarkMode
+            ? 'bg-gradient-to-r from-purple-600/20 to-pink-600/20'
             : 'bg-gradient-to-r from-purple-300/30 to-pink-300/30'
         }`}></div>
         <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full blur-2xl animate-pulse delay-500 ${
-          isDarkMode 
-            ? 'bg-gradient-to-r from-cyan-600/10 to-blue-600/10' 
+          isDarkMode
+            ? 'bg-gradient-to-r from-cyan-600/10 to-blue-600/10'
             : 'bg-gradient-to-r from-cyan-300/20 to-blue-300/20'
         }`}></div>
       </div>
-      
+
       {/* Main container */}
       <div className="max-w-lg w-full relative z-10">
         {/* Premium glass card */}
@@ -110,11 +111,11 @@ const EnhancedLogin = ({ onLogin }) => {
           <div className={`absolute -inset-1 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-3xl blur transition duration-1000 ${
             isDarkMode ? 'opacity-25 group-hover:opacity-40' : 'opacity-15 group-hover:opacity-25'
           }`}></div>
-          
+
           {/* Main card */}
           <div className={`relative backdrop-blur-2xl rounded-3xl p-10 shadow-2xl border transition-all duration-500 ${
-            isDarkMode 
-              ? 'bg-white/5 border-white/10' 
+            isDarkMode
+              ? 'bg-white/5 border-white/10'
               : 'bg-white/80 border-white/30 shadow-xl'
           }`}>
             {/* Header section */}
@@ -126,12 +127,12 @@ const EnhancedLogin = ({ onLogin }) => {
                   <CheckSquare className="h-10 w-10 text-white" />
                 </div>
               </div>
-              
+
               {/* Premium typography */}
               <div className="space-y-3">
                 <h1 className={`text-4xl font-bold bg-clip-text text-transparent ${
-                  isDarkMode 
-                    ? 'bg-gradient-to-r from-white via-blue-100 to-purple-100' 
+                  isDarkMode
+                    ? 'bg-gradient-to-r from-white via-blue-100 to-purple-100'
                     : 'bg-gradient-to-r from-gray-800 via-blue-600 to-purple-600'
                 }`}>
                   TaskFlow
@@ -152,14 +153,14 @@ const EnhancedLogin = ({ onLogin }) => {
               {/* Error display */}
               {error && (
                 <div className={`p-4 rounded-2xl border text-sm ${
-                  isDarkMode 
-                    ? 'bg-red-500/10 border-red-500/30 text-red-300' 
+                  isDarkMode
+                    ? 'bg-red-500/10 border-red-500/30 text-red-300'
                     : 'bg-red-50 border-red-200 text-red-600'
                 }`}>
                   {error}
                 </div>
               )}
-              
+
               {/* Name field (registration only) */}
               {isRegistering && (
                 <div className="group">
@@ -171,8 +172,8 @@ const EnhancedLogin = ({ onLogin }) => {
                       type="text"
                       placeholder="Enter your full name"
                       className={`w-full px-6 py-4 border rounded-2xl backdrop-blur-sm transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 ${
-                        isDarkMode 
-                          ? 'bg-white/5 border-white/10 text-white placeholder-gray-400 group-hover:bg-white/10' 
+                        isDarkMode
+                          ? 'bg-white/5 border-white/10 text-white placeholder-gray-400 group-hover:bg-white/10'
                           : 'bg-white/70 border-gray-200 text-gray-800 placeholder-gray-500 group-hover:bg-white/90'
                       }`}
                       value={formData.name}
@@ -182,7 +183,7 @@ const EnhancedLogin = ({ onLogin }) => {
                   </div>
                 </div>
               )}
-              
+
               {/* Email field with luxury styling */}
               <div className="group">
                 <label className={`block text-sm font-medium mb-3 tracking-wide ${
@@ -193,14 +194,14 @@ const EnhancedLogin = ({ onLogin }) => {
                     type="email"
                     placeholder="Enter your email"
                     className={`w-full px-6 py-4 border rounded-2xl backdrop-blur-sm transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 ${
-                      isDarkMode 
-                        ? 'bg-white/5 border-white/10 text-white placeholder-gray-400 group-hover:bg-white/10' 
+                      isDarkMode
+                        ? 'bg-white/5 border-white/10 text-white placeholder-gray-400 group-hover:bg-white/10'
                         : 'bg-white/70 border-gray-200 text-gray-800 placeholder-gray-500 group-hover:bg-white/90'
                     }`}
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   />
-                  <div className={`absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none`}></div>
+                  <div className='absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none'></div>
                 </div>
               </div>
 
@@ -214,8 +215,8 @@ const EnhancedLogin = ({ onLogin }) => {
                     type={showPassword ? 'text' : 'password'}
                     placeholder="Enter your password"
                     className={`w-full px-6 py-4 pr-14 border rounded-2xl backdrop-blur-sm transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 ${
-                      isDarkMode 
-                        ? 'bg-white/5 border-white/10 text-white placeholder-gray-400 group-hover:bg-white/10' 
+                      isDarkMode
+                        ? 'bg-white/5 border-white/10 text-white placeholder-gray-400 group-hover:bg-white/10'
                         : 'bg-white/70 border-gray-200 text-gray-800 placeholder-gray-500 group-hover:bg-white/90'
                     }`}
                     value={formData.password}
@@ -225,8 +226,8 @@ const EnhancedLogin = ({ onLogin }) => {
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className={`absolute right-4 top-1/2 transform -translate-y-1/2 transition-colors duration-200 ${
-                      isDarkMode 
-                        ? 'text-gray-400 hover:text-white' 
+                      isDarkMode
+                        ? 'text-gray-400 hover:text-white'
                         : 'text-gray-500 hover:text-gray-800'
                     }`}
                   >
@@ -247,8 +248,8 @@ const EnhancedLogin = ({ onLogin }) => {
                       type="password"
                       placeholder="Confirm your password"
                       className={`w-full px-6 py-4 border rounded-2xl backdrop-blur-sm transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 ${
-                        isDarkMode 
-                          ? 'bg-white/5 border-white/10 text-white placeholder-gray-400 group-hover:bg-white/10' 
+                        isDarkMode
+                          ? 'bg-white/5 border-white/10 text-white placeholder-gray-400 group-hover:bg-white/10'
                           : 'bg-white/70 border-gray-200 text-gray-800 placeholder-gray-500 group-hover:bg-white/90'
                       }`}
                       value={formData.confirmPassword}
@@ -262,7 +263,7 @@ const EnhancedLogin = ({ onLogin }) => {
               {/* Premium submit button */}
               <div className="pt-4">
                 <button
-                  type="submit"
+                  onClick={handleSubmit}
                   disabled={loading}
                   className="group relative w-full py-4 px-6 overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white font-semibold text-lg tracking-wide shadow-2xl transition-all duration-300 hover:shadow-blue-500/25 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -289,11 +290,11 @@ const EnhancedLogin = ({ onLogin }) => {
                 isDarkMode ? 'text-gray-400' : 'text-gray-600'
               }`}>
                 {isRegistering ? 'Already have an account?' : 'New to TaskFlow?'}{' '}
-                <button 
+                <button
                   onClick={toggleAuthMode}
                   className={`font-medium transition-colors duration-200 hover:underline ${
-                    isDarkMode 
-                      ? 'text-blue-400 hover:text-blue-300' 
+                    isDarkMode
+                      ? 'text-blue-400 hover:text-blue-300'
                       : 'text-blue-600 hover:text-blue-500'
                   }`}
                 >
@@ -314,8 +315,8 @@ const EnhancedHeader = ({ user, onLogout, isDarkMode, setIsDarkMode }) => {
 
   return (
     <header className={`backdrop-blur-xl shadow-sm border-b sticky top-0 z-50 transition-colors duration-300 ${
-      isDarkMode 
-        ? 'bg-gray-800/80 border-gray-700/50' 
+      isDarkMode
+        ? 'bg-gray-800/80 border-gray-700/50'
         : 'bg-white/80 border-gray-200/50'
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -337,8 +338,8 @@ const EnhancedHeader = ({ user, onLogout, isDarkMode, setIsDarkMode }) => {
               <input
                 type="text"
                 className={`w-full pl-10 pr-4 py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
-                  isDarkMode 
-                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                  isDarkMode
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                     : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-500'
                 }`}
                 placeholder="Search tasks, projects..."
@@ -351,8 +352,8 @@ const EnhancedHeader = ({ user, onLogout, isDarkMode, setIsDarkMode }) => {
             <button
               onClick={() => setIsDarkMode(!isDarkMode)}
               className={`p-2 rounded-xl transition-all ${
-                isDarkMode 
-                  ? 'text-gray-300 hover:text-white hover:bg-gray-700' 
+                isDarkMode
+                  ? 'text-gray-300 hover:text-white hover:bg-gray-700'
                   : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
               }`}
             >
@@ -360,8 +361,8 @@ const EnhancedHeader = ({ user, onLogout, isDarkMode, setIsDarkMode }) => {
             </button>
 
             <button className={`relative p-2 rounded-xl transition-all ${
-              isDarkMode 
-                ? 'text-gray-400 hover:text-gray-300 hover:bg-gray-700' 
+              isDarkMode
+                ? 'text-gray-400 hover:text-gray-300 hover:bg-gray-700'
                 : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
             }`}>
               <Bell className="h-5 w-5" />
@@ -372,8 +373,8 @@ const EnhancedHeader = ({ user, onLogout, isDarkMode, setIsDarkMode }) => {
               <button
                 onClick={() => setShowProfileMenu(!showProfileMenu)}
                 className={`flex items-center space-x-2 p-2 rounded-xl transition-all ${
-                  isDarkMode 
-                    ? 'hover:bg-gray-700' 
+                  isDarkMode
+                    ? 'hover:bg-gray-700'
                     : 'hover:bg-gray-100'
                 }`}
               >
@@ -387,8 +388,8 @@ const EnhancedHeader = ({ user, onLogout, isDarkMode, setIsDarkMode }) => {
 
               {showProfileMenu && (
                 <div className={`absolute right-0 mt-2 w-48 rounded-xl shadow-lg border py-1 z-50 ${
-                  isDarkMode 
-                    ? 'bg-gray-800 border-gray-700' 
+                  isDarkMode
+                    ? 'bg-gray-800 border-gray-700'
                     : 'bg-white border-gray-200'
                 }`}>
                   <div className={`px-4 py-2 border-b ${
@@ -402,8 +403,8 @@ const EnhancedHeader = ({ user, onLogout, isDarkMode, setIsDarkMode }) => {
                     }`}>{user?.email}</div>
                   </div>
                   <button className={`flex items-center w-full px-4 py-2 text-sm transition-colors ${
-                    isDarkMode 
-                      ? 'text-gray-300 hover:bg-gray-700' 
+                    isDarkMode
+                      ? 'text-gray-300 hover:bg-gray-700'
                       : 'text-gray-700 hover:bg-gray-50'
                   }`}>
                     <Settings className="h-4 w-4 mr-2" />
@@ -412,8 +413,8 @@ const EnhancedHeader = ({ user, onLogout, isDarkMode, setIsDarkMode }) => {
                   <button
                     onClick={onLogout}
                     className={`flex items-center w-full px-4 py-2 text-sm transition-colors ${
-                      isDarkMode 
-                        ? 'text-red-400 hover:bg-gray-700' 
+                      isDarkMode
+                        ? 'text-red-400 hover:bg-gray-700'
                         : 'text-red-600 hover:bg-red-50'
                     }`}
                   >
@@ -442,8 +443,8 @@ const EnhancedSidebar = ({ isDarkMode }) => {
 
   return (
     <div className={`w-64 shadow-sm h-screen border-r transition-colors duration-300 ${
-      isDarkMode 
-        ? 'bg-gray-800 border-gray-700' 
+      isDarkMode
+        ? 'bg-gray-800 border-gray-700'
         : 'bg-white border-gray-200'
     }`}>
       <nav className="mt-6 px-3">
@@ -465,10 +466,10 @@ const EnhancedSidebar = ({ isDarkMode }) => {
               {({ isActive }) => (
                 <>
                   <item.icon className={`mr-3 h-5 w-5 ${
-                    isActive 
-                      ? 'text-white' 
-                      : isDarkMode 
-                        ? 'text-gray-400' 
+                    isActive
+                      ? 'text-white'
+                      : isDarkMode
+                        ? 'text-gray-400'
                         : 'text-gray-400'
                   }`} />
                   {item.name}
@@ -483,7 +484,7 @@ const EnhancedSidebar = ({ isDarkMode }) => {
 };
 
 // Enhanced Dashboard
-const EnhancedDashboard = ({ isDarkMode }) => {
+const EnhancedDashboard = ({ isDarkMode: _isDarkMode }) => {
   const [stats] = useState({
     totalProjects: 12,
     activeTasks: 28,
@@ -512,10 +513,10 @@ const EnhancedDashboard = ({ isDarkMode }) => {
 
   const getPriorityColor = (priority) => {
     switch (priority) {
-      case 'high': return 'bg-red-100 text-red-800 border-red-200';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'low': return 'bg-green-100 text-green-800 border-green-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    case 'high': return 'bg-red-100 text-red-800 border-red-200';
+    case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    case 'low': return 'bg-green-100 text-green-800 border-green-200';
+    default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
@@ -533,19 +534,11 @@ const EnhancedDashboard = ({ isDarkMode }) => {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {statCards.map((stat) => (
-          <div key={stat.name} className={`rounded-2xl p-6 shadow-sm border transition-all hover:shadow-md ${
-            isDarkMode 
-              ? 'bg-gray-800 border-gray-700' 
-              : 'bg-white border-gray-100'
-          }`}>
+          <div key={stat.name} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all">
             <div className="flex items-center justify-between">
               <div>
-                <p className={`text-sm font-medium ${
-                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                }`}>{stat.name}</p>
-                <p className={`text-3xl font-bold mt-1 ${
-                  isDarkMode ? 'text-white' : 'text-gray-900'
-                }`}>{stat.value}</p>
+                <p className="text-sm font-medium text-gray-600">{stat.name}</p>
+                <p className="text-3xl font-bold text-gray-900 mt-1">{stat.value}</p>
               </div>
               <div className={`p-3 rounded-xl bg-gradient-to-r ${stat.color}`}>
                 <stat.icon className="h-6 w-6 text-white" />
@@ -558,18 +551,10 @@ const EnhancedDashboard = ({ isDarkMode }) => {
       {/* Projects and Tasks Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Recent Projects */}
-        <div className={`rounded-2xl shadow-sm border ${
-          isDarkMode 
-            ? 'bg-gray-800 border-gray-700' 
-            : 'bg-white border-gray-100'
-        }`}>
-          <div className={`p-6 border-b ${
-            isDarkMode ? 'border-gray-700' : 'border-gray-100'
-          }`}>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
+          <div className="p-6 border-b border-gray-100">
             <div className="flex items-center justify-between">
-              <h3 className={`text-xl font-semibold ${
-                isDarkMode ? 'text-white' : 'text-gray-900'
-              }`}>Recent Projects</h3>
+              <h3 className="text-xl font-semibold text-gray-900">Recent Projects</h3>
               <Link to="/projects" className="flex items-center text-blue-600 hover:text-blue-700 font-medium">
                 View all <ArrowRight className="h-4 w-4 ml-1" />
               </Link>
@@ -577,29 +562,19 @@ const EnhancedDashboard = ({ isDarkMode }) => {
           </div>
           <div className="p-6 space-y-4">
             {projects.map((project) => (
-              <div key={project.id} className={`p-4 border rounded-xl transition-all hover:border-gray-200 ${
-                isDarkMode ? 'border-gray-700 hover:border-gray-600' : 'border-gray-100'
-              }`}>
+              <div key={project.id} className="p-4 border border-gray-100 rounded-xl hover:border-gray-200 transition-all">
                 <div className="flex items-center justify-between mb-3">
-                  <h4 className={`font-semibold ${
-                    isDarkMode ? 'text-white' : 'text-gray-900'
-                  }`}>{project.name}</h4>
-                  <span className={`text-sm ${
-                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                  }`}>{project.tasks} tasks</span>
+                  <h4 className="font-semibold text-gray-900">{project.name}</h4>
+                  <span className="text-sm text-gray-500">{project.tasks} tasks</span>
                 </div>
                 <div className="flex items-center space-x-3">
-                  <div className={`flex-1 rounded-full h-2 ${
-                    isDarkMode ? 'bg-gray-700' : 'bg-gray-200'
-                  }`}>
-                    <div 
+                  <div className="flex-1 bg-gray-200 rounded-full h-2">
+                    <div
                       className={`h-2 rounded-full bg-gradient-to-r ${project.color}`}
                       style={{ width: `${project.progress}%` }}
                     ></div>
                   </div>
-                  <span className={`text-sm font-medium ${
-                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                  }`}>{project.progress}%</span>
+                  <span className="text-sm font-medium text-gray-700">{project.progress}%</span>
                 </div>
               </div>
             ))}
@@ -607,18 +582,10 @@ const EnhancedDashboard = ({ isDarkMode }) => {
         </div>
 
         {/* Recent Tasks */}
-        <div className={`rounded-2xl shadow-sm border ${
-          isDarkMode 
-            ? 'bg-gray-800 border-gray-700' 
-            : 'bg-white border-gray-100'
-        }`}>
-          <div className={`p-6 border-b ${
-            isDarkMode ? 'border-gray-700' : 'border-gray-100'
-          }`}>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
+          <div className="p-6 border-b border-gray-100">
             <div className="flex items-center justify-between">
-              <h3 className={`text-xl font-semibold ${
-                isDarkMode ? 'text-white' : 'text-gray-900'
-              }`}>Active Tasks</h3>
+              <h3 className="text-xl font-semibold text-gray-900">Active Tasks</h3>
               <Link to="/tasks" className="flex items-center text-blue-600 hover:text-blue-700 font-medium">
                 View all <ArrowRight className="h-4 w-4 ml-1" />
               </Link>
@@ -626,18 +593,12 @@ const EnhancedDashboard = ({ isDarkMode }) => {
           </div>
           <div className="p-6 space-y-4">
             {tasks.map((task) => (
-              <div key={task.id} className={`p-4 border rounded-xl transition-all hover:border-gray-200 ${
-                isDarkMode ? 'border-gray-700 hover:border-gray-600' : 'border-gray-100'
-              }`}>
+              <div key={task.id} className="p-4 border border-gray-100 rounded-xl hover:border-gray-200 transition-all">
                 <div className="flex items-start space-x-3">
                   <input type="checkbox" className="mt-1 rounded border-gray-300" />
                   <div className="flex-1">
-                    <h4 className={`font-medium ${
-                      isDarkMode ? 'text-white' : 'text-gray-900'
-                    }`}>{task.title}</h4>
-                    <p className={`text-sm mt-1 ${
-                      isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                    }`}>{task.project}</p>
+                    <h4 className="font-medium text-gray-900">{task.title}</h4>
+                    <p className="text-sm text-gray-500 mt-1">{task.project}</p>
                   </div>
                   <span className={`px-2 py-1 rounded-lg text-xs font-medium border ${getPriorityColor(task.priority)}`}>
                     {task.priority}
@@ -722,7 +683,7 @@ const ProjectsPage = ({ isDarkMode }) => {
 
   const handleCreateProject = () => {
     if (!newProject.name.trim()) return;
-    
+
     const project = {
       id: Date.now(),
       ...newProject,
@@ -732,7 +693,7 @@ const ProjectsPage = ({ isDarkMode }) => {
       completedTasks: 0,
       color: 'from-indigo-500 to-indigo-600'
     };
-    
+
     setProjects([...projects, project]);
     setNewProject({ name: '', description: '', priority: 'medium', startDate: '', endDate: '', team: [] });
     setShowCreateModal(false);
@@ -753,13 +714,13 @@ const ProjectsPage = ({ isDarkMode }) => {
 
   const handleUpdateProject = () => {
     if (!newProject.name.trim()) return;
-    
-    setProjects(projects.map(p => 
-      p.id === editingProject.id 
+
+    setProjects(projects.map(p =>
+      p.id === editingProject.id
         ? { ...p, ...newProject }
         : p
     ));
-    
+
     setEditingProject(null);
     setNewProject({ name: '', description: '', priority: 'medium', startDate: '', endDate: '', team: [] });
     setShowCreateModal(false);
@@ -771,19 +732,19 @@ const ProjectsPage = ({ isDarkMode }) => {
 
   const getPriorityColor = (priority) => {
     switch (priority) {
-      case 'high': return isDarkMode ? 'bg-red-900 text-red-200 border-red-700' : 'bg-red-100 text-red-800 border-red-200';
-      case 'medium': return isDarkMode ? 'bg-yellow-900 text-yellow-200 border-yellow-700' : 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'low': return isDarkMode ? 'bg-green-900 text-green-200 border-green-700' : 'bg-green-100 text-green-800 border-green-200';
-      default: return isDarkMode ? 'bg-gray-700 text-gray-200 border-gray-600' : 'bg-gray-100 text-gray-800 border-gray-200';
+    case 'high': return isDarkMode ? 'bg-red-900 text-red-200 border-red-700' : 'bg-red-100 text-red-800 border-red-200';
+    case 'medium': return isDarkMode ? 'bg-yellow-900 text-yellow-200 border-yellow-700' : 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    case 'low': return isDarkMode ? 'bg-green-900 text-green-200 border-green-700' : 'bg-green-100 text-green-800 border-green-200';
+    default: return isDarkMode ? 'bg-gray-700 text-gray-200 border-gray-600' : 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'active': return isDarkMode ? 'bg-blue-900 text-blue-200 border-blue-700' : 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'completed': return isDarkMode ? 'bg-green-900 text-green-200 border-green-700' : 'bg-green-100 text-green-800 border-green-200';
-      case 'paused': return isDarkMode ? 'bg-gray-700 text-gray-200 border-gray-600' : 'bg-gray-100 text-gray-800 border-gray-200';
-      default: return isDarkMode ? 'bg-gray-700 text-gray-200 border-gray-600' : 'bg-gray-100 text-gray-800 border-gray-200';
+    case 'active': return isDarkMode ? 'bg-blue-900 text-blue-200 border-blue-700' : 'bg-blue-100 text-blue-800 border-blue-200';
+    case 'completed': return isDarkMode ? 'bg-green-900 text-green-200 border-green-700' : 'bg-green-100 text-green-800 border-green-200';
+    case 'paused': return isDarkMode ? 'bg-gray-700 text-gray-200 border-gray-600' : 'bg-gray-100 text-gray-800 border-gray-200';
+    default: return isDarkMode ? 'bg-gray-700 text-gray-200 border-gray-600' : 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
@@ -823,8 +784,8 @@ const ProjectsPage = ({ isDarkMode }) => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className={`w-full pl-10 pr-4 py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
-                isDarkMode 
-                  ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400' 
+                isDarkMode
+                  ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400'
                   : 'bg-white border-gray-200 text-gray-900 placeholder-gray-500'
               }`}
             />
@@ -838,8 +799,8 @@ const ProjectsPage = ({ isDarkMode }) => {
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
             className={`px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              isDarkMode 
-                ? 'bg-gray-800 border-gray-700 text-white' 
+              isDarkMode
+                ? 'bg-gray-800 border-gray-700 text-white'
                 : 'bg-white border-gray-200 text-gray-900'
             }`}
           >
@@ -857,8 +818,8 @@ const ProjectsPage = ({ isDarkMode }) => {
           <div
             key={project.id}
             className={`rounded-2xl shadow-sm border transition-all hover:shadow-lg ${
-              isDarkMode 
-                ? 'bg-gray-800 border-gray-700' 
+              isDarkMode
+                ? 'bg-gray-800 border-gray-700'
                 : 'bg-white border-gray-200'
             }`}
           >
@@ -877,8 +838,8 @@ const ProjectsPage = ({ isDarkMode }) => {
                   <button
                     onClick={() => handleEditProject(project)}
                     className={`p-2 rounded-lg transition-colors ${
-                      isDarkMode 
-                        ? 'hover:bg-gray-700 text-gray-400 hover:text-white' 
+                      isDarkMode
+                        ? 'hover:bg-gray-700 text-gray-400 hover:text-white'
                         : 'hover:bg-gray-100 text-gray-500 hover:text-gray-700'
                     }`}
                   >
@@ -887,8 +848,8 @@ const ProjectsPage = ({ isDarkMode }) => {
                   <button
                     onClick={() => handleDeleteProject(project.id)}
                     className={`p-2 rounded-lg transition-colors ${
-                      isDarkMode 
-                        ? 'hover:bg-red-900 text-gray-400 hover:text-red-300' 
+                      isDarkMode
+                        ? 'hover:bg-red-900 text-gray-400 hover:text-red-300'
                         : 'hover:bg-red-50 text-gray-500 hover:text-red-600'
                     }`}
                   >
@@ -991,8 +952,8 @@ const ProjectsPage = ({ isDarkMode }) => {
                     setNewProject({ name: '', description: '', priority: 'medium', startDate: '', endDate: '', team: [] });
                   }}
                   className={`p-2 rounded-lg transition-colors ${
-                    isDarkMode 
-                      ? 'hover:bg-gray-700 text-gray-400 hover:text-white' 
+                    isDarkMode
+                      ? 'hover:bg-gray-700 text-gray-400 hover:text-white'
                       : 'hover:bg-gray-100 text-gray-500 hover:text-gray-700'
                   }`}
                 >
@@ -1010,8 +971,8 @@ const ProjectsPage = ({ isDarkMode }) => {
                     value={newProject.name}
                     onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
                     className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      isDarkMode 
-                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                      isDarkMode
+                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                         : 'bg-white border-gray-200 text-gray-900 placeholder-gray-500'
                     }`}
                     placeholder="Enter project name"
@@ -1027,8 +988,8 @@ const ProjectsPage = ({ isDarkMode }) => {
                     onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
                     rows={3}
                     className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      isDarkMode 
-                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                      isDarkMode
+                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                         : 'bg-white border-gray-200 text-gray-900 placeholder-gray-500'
                     }`}
                     placeholder="Enter project description"
@@ -1043,8 +1004,8 @@ const ProjectsPage = ({ isDarkMode }) => {
                     value={newProject.priority}
                     onChange={(e) => setNewProject({ ...newProject, priority: e.target.value })}
                     className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      isDarkMode 
-                        ? 'bg-gray-700 border-gray-600 text-white' 
+                      isDarkMode
+                        ? 'bg-gray-700 border-gray-600 text-white'
                         : 'bg-white border-gray-200 text-gray-900'
                     }`}
                   >
@@ -1064,8 +1025,8 @@ const ProjectsPage = ({ isDarkMode }) => {
                       value={newProject.startDate}
                       onChange={(e) => setNewProject({ ...newProject, startDate: e.target.value })}
                       className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                        isDarkMode 
-                          ? 'bg-gray-700 border-gray-600 text-white' 
+                        isDarkMode
+                          ? 'bg-gray-700 border-gray-600 text-white'
                           : 'bg-white border-gray-200 text-gray-900'
                       }`}
                     />
@@ -1079,8 +1040,8 @@ const ProjectsPage = ({ isDarkMode }) => {
                       value={newProject.endDate}
                       onChange={(e) => setNewProject({ ...newProject, endDate: e.target.value })}
                       className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                        isDarkMode 
-                          ? 'bg-gray-700 border-gray-600 text-white' 
+                        isDarkMode
+                          ? 'bg-gray-700 border-gray-600 text-white'
                           : 'bg-white border-gray-200 text-gray-900'
                       }`}
                     />
@@ -1096,8 +1057,8 @@ const ProjectsPage = ({ isDarkMode }) => {
                     setNewProject({ name: '', description: '', priority: 'medium', startDate: '', endDate: '', team: [] });
                   }}
                   className={`flex-1 px-4 py-2 border rounded-xl transition-colors ${
-                    isDarkMode 
-                      ? 'border-gray-600 text-gray-300 hover:bg-gray-700' 
+                    isDarkMode
+                      ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
                       : 'border-gray-200 text-gray-700 hover:bg-gray-50'
                   }`}
                 >
@@ -1159,7 +1120,7 @@ const TasksPage = ({ isDarkMode }) => {
     }
   ]);
 
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [, setShowCreateModal] = useState(false);
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterPriority, setFilterPriority] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -1174,19 +1135,19 @@ const TasksPage = ({ isDarkMode }) => {
 
   const getPriorityColor = (priority) => {
     switch (priority) {
-      case 'high': return isDarkMode ? 'bg-red-900 text-red-200 border-red-700' : 'bg-red-100 text-red-800 border-red-200';
-      case 'medium': return isDarkMode ? 'bg-yellow-900 text-yellow-200 border-yellow-700' : 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'low': return isDarkMode ? 'bg-green-900 text-green-200 border-green-700' : 'bg-green-100 text-green-800 border-green-200';
-      default: return isDarkMode ? 'bg-gray-700 text-gray-200 border-gray-600' : 'bg-gray-100 text-gray-800 border-gray-200';
+    case 'high': return isDarkMode ? 'bg-red-900 text-red-200 border-red-700' : 'bg-red-100 text-red-800 border-red-200';
+    case 'medium': return isDarkMode ? 'bg-yellow-900 text-yellow-200 border-yellow-700' : 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    case 'low': return isDarkMode ? 'bg-green-900 text-green-200 border-green-700' : 'bg-green-100 text-green-800 border-green-200';
+    default: return isDarkMode ? 'bg-gray-700 text-gray-200 border-gray-600' : 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'todo': return isDarkMode ? 'bg-gray-700 text-gray-200 border-gray-600' : 'bg-gray-100 text-gray-800 border-gray-200';
-      case 'in-progress': return isDarkMode ? 'bg-blue-900 text-blue-200 border-blue-700' : 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'completed': return isDarkMode ? 'bg-green-900 text-green-200 border-green-700' : 'bg-green-100 text-green-800 border-green-200';
-      default: return isDarkMode ? 'bg-gray-700 text-gray-200 border-gray-600' : 'bg-gray-100 text-gray-800 border-gray-200';
+    case 'todo': return isDarkMode ? 'bg-gray-700 text-gray-200 border-gray-600' : 'bg-gray-100 text-gray-800 border-gray-200';
+    case 'in-progress': return isDarkMode ? 'bg-blue-900 text-blue-200 border-blue-700' : 'bg-blue-100 text-blue-800 border-blue-200';
+    case 'completed': return isDarkMode ? 'bg-green-900 text-green-200 border-green-700' : 'bg-green-100 text-green-800 border-green-200';
+    default: return isDarkMode ? 'bg-gray-700 text-gray-200 border-gray-600' : 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
@@ -1225,8 +1186,8 @@ const TasksPage = ({ isDarkMode }) => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className={`w-full pl-10 pr-4 py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
-                isDarkMode 
-                  ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400' 
+                isDarkMode
+                  ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400'
                   : 'bg-white border-gray-200 text-gray-900 placeholder-gray-500'
               }`}
             />
@@ -1236,8 +1197,8 @@ const TasksPage = ({ isDarkMode }) => {
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
           className={`px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-            isDarkMode 
-              ? 'bg-gray-800 border-gray-700 text-white' 
+            isDarkMode
+              ? 'bg-gray-800 border-gray-700 text-white'
               : 'bg-white border-gray-200 text-gray-900'
           }`}
         >
@@ -1250,8 +1211,8 @@ const TasksPage = ({ isDarkMode }) => {
           value={filterPriority}
           onChange={(e) => setFilterPriority(e.target.value)}
           className={`px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-            isDarkMode 
-              ? 'bg-gray-800 border-gray-700 text-white' 
+            isDarkMode
+              ? 'bg-gray-800 border-gray-700 text-white'
               : 'bg-white border-gray-200 text-gray-900'
           }`}
         >
@@ -1268,8 +1229,8 @@ const TasksPage = ({ isDarkMode }) => {
           <div
             key={task.id}
             className={`rounded-2xl shadow-sm border transition-all hover:shadow-lg p-6 ${
-              isDarkMode 
-                ? 'bg-gray-800 border-gray-700' 
+              isDarkMode
+                ? 'bg-gray-800 border-gray-700'
                 : 'bg-white border-gray-200'
             }`}
           >
@@ -1318,15 +1279,15 @@ const TasksPage = ({ isDarkMode }) => {
               </div>
               <div className="flex items-center gap-2">
                 <button className={`p-2 rounded-lg transition-colors ${
-                  isDarkMode 
-                    ? 'hover:bg-gray-700 text-gray-400 hover:text-white' 
+                  isDarkMode
+                    ? 'hover:bg-gray-700 text-gray-400 hover:text-white'
                     : 'hover:bg-gray-100 text-gray-500 hover:text-gray-700'
                 }`}>
                   <Edit className="h-4 w-4" />
                 </button>
                 <button className={`p-2 rounded-lg transition-colors ${
-                  isDarkMode 
-                    ? 'hover:bg-red-900 text-gray-400 hover:text-red-300' 
+                  isDarkMode
+                    ? 'hover:bg-red-900 text-gray-400 hover:text-red-300'
                     : 'hover:bg-red-50 text-gray-500 hover:text-red-600'
                 }`}>
                   <Trash2 className="h-4 w-4" />
@@ -1346,7 +1307,7 @@ const TimeTrackingPage = ({ isDarkMode }) => {
   const [currentTime, setCurrentTime] = useState(0);
   const [selectedProject, setSelectedProject] = useState('Website Redesign');
   const [selectedTask, setSelectedTask] = useState('Design homepage mockup');
-  const [startTime, setStartTime] = useState(null);
+  const [, setStartTime] = useState(null);
 
   const [timeEntries, setTimeEntries] = useState([
     { id: 1, project: 'Website Redesign', task: 'Design homepage mockup', duration: 2.5, date: '2024-02-14' },
@@ -1424,8 +1385,8 @@ const TimeTrackingPage = ({ isDarkMode }) => {
 
         {/* Timer Section */}
         <div className={`rounded-2xl shadow-sm border p-8 mb-8 text-center ${
-          isDarkMode 
-            ? 'bg-gray-800 border-gray-700' 
+          isDarkMode
+            ? 'bg-gray-800 border-gray-700'
             : 'bg-white border-gray-200'
         }`}>
           <div className={`text-6xl font-mono font-bold mb-6 ${
@@ -1433,17 +1394,17 @@ const TimeTrackingPage = ({ isDarkMode }) => {
           }`}>
             {formatTime(currentTime)}
           </div>
-          
+
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
-            <select 
+            <select
               value={selectedProject}
               onChange={(e) => {
                 setSelectedProject(e.target.value);
                 setSelectedTask(tasks[e.target.value][0]);
               }}
               className={`w-full sm:w-auto px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                isDarkMode 
-                  ? 'bg-gray-700 border-gray-600 text-white' 
+                isDarkMode
+                  ? 'bg-gray-700 border-gray-600 text-white'
                   : 'bg-white border-gray-200 text-gray-900'
               }`}
             >
@@ -1451,12 +1412,12 @@ const TimeTrackingPage = ({ isDarkMode }) => {
                 <option key={project} value={project}>{project}</option>
               ))}
             </select>
-            <select 
+            <select
               value={selectedTask}
               onChange={(e) => setSelectedTask(e.target.value)}
               className={`w-full sm:w-auto px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                isDarkMode 
-                  ? 'bg-gray-700 border-gray-600 text-white' 
+                isDarkMode
+                  ? 'bg-gray-700 border-gray-600 text-white'
                   : 'bg-white border-gray-200 text-gray-900'
               }`}
             >
@@ -1470,8 +1431,8 @@ const TimeTrackingPage = ({ isDarkMode }) => {
             <button
               onClick={handleStartPause}
               className={`w-full sm:w-auto flex items-center justify-center px-6 py-3 rounded-xl transition-all shadow-lg hover:shadow-xl transform hover:scale-105 ${
-                isTimerRunning 
-                  ? 'bg-red-500 hover:bg-red-600 text-white' 
+                isTimerRunning
+                  ? 'bg-red-500 hover:bg-red-600 text-white'
                   : 'bg-green-500 hover:bg-green-600 text-white'
               }`}
             >
@@ -1484,8 +1445,8 @@ const TimeTrackingPage = ({ isDarkMode }) => {
             <button
               onClick={handleReset}
               className={`w-full sm:w-auto flex items-center justify-center px-6 py-3 border rounded-xl transition-colors ${
-                isDarkMode 
-                  ? 'border-gray-600 text-gray-300 hover:bg-gray-700' 
+                isDarkMode
+                  ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
                   : 'border-gray-200 text-gray-700 hover:bg-gray-50'
               }`}
             >
@@ -1506,13 +1467,11 @@ const TimeTrackingPage = ({ isDarkMode }) => {
 
         {/* Recent Time Entries */}
         <div className={`rounded-2xl shadow-sm border ${
-          isDarkMode 
-            ? 'bg-gray-800 border-gray-700' 
+          isDarkMode
+            ? 'bg-gray-800 border-gray-700'
             : 'bg-white border-gray-200'
         }`}>
-          <div className={`p-6 border-b ${
-            isDarkMode ? 'border-gray-700' : 'border-gray-200'
-          }`}>
+          <div className="p-6 border-b border-gray-200">
             <h3 className={`text-xl font-semibold ${
               isDarkMode ? 'text-white' : 'text-gray-900'
             }`}>Recent Time Entries</h3>
@@ -1567,8 +1526,8 @@ const AnalyticsPage = ({ isDarkMode }) => {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div className={`rounded-2xl shadow-sm border p-6 ${
-          isDarkMode 
-            ? 'bg-gray-800 border-gray-700' 
+          isDarkMode
+            ? 'bg-gray-800 border-gray-700'
             : 'bg-white border-gray-200'
         }`}>
           <div className="flex items-center">
@@ -1587,8 +1546,8 @@ const AnalyticsPage = ({ isDarkMode }) => {
         </div>
 
         <div className={`rounded-2xl shadow-sm border p-6 ${
-          isDarkMode 
-            ? 'bg-gray-800 border-gray-700' 
+          isDarkMode
+            ? 'bg-gray-800 border-gray-700'
             : 'bg-white border-gray-200'
         }`}>
           <div className="flex items-center">
@@ -1607,8 +1566,8 @@ const AnalyticsPage = ({ isDarkMode }) => {
         </div>
 
         <div className={`rounded-2xl shadow-sm border p-6 ${
-          isDarkMode 
-            ? 'bg-gray-800 border-gray-700' 
+          isDarkMode
+            ? 'bg-gray-800 border-gray-700'
             : 'bg-white border-gray-200'
         }`}>
           <div className="flex items-center">
@@ -1627,8 +1586,8 @@ const AnalyticsPage = ({ isDarkMode }) => {
         </div>
 
         <div className={`rounded-2xl shadow-sm border p-6 ${
-          isDarkMode 
-            ? 'bg-gray-800 border-gray-700' 
+          isDarkMode
+            ? 'bg-gray-800 border-gray-700'
             : 'bg-white border-gray-200'
         }`}>
           <div className="flex items-center">
@@ -1650,8 +1609,8 @@ const AnalyticsPage = ({ isDarkMode }) => {
       {/* Charts Placeholder */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className={`rounded-2xl shadow-sm border p-6 ${
-          isDarkMode 
-            ? 'bg-gray-800 border-gray-700' 
+          isDarkMode
+            ? 'bg-gray-800 border-gray-700'
             : 'bg-white border-gray-200'
         }`}>
           <h3 className={`text-lg font-semibold mb-4 ${
@@ -1668,8 +1627,8 @@ const AnalyticsPage = ({ isDarkMode }) => {
         </div>
 
         <div className={`rounded-2xl shadow-sm border p-6 ${
-          isDarkMode 
-            ? 'bg-gray-800 border-gray-700' 
+          isDarkMode
+            ? 'bg-gray-800 border-gray-700'
             : 'bg-white border-gray-200'
         }`}>
           <h3 className={`text-lg font-semibold mb-4 ${
@@ -1699,7 +1658,7 @@ function App() {
   React.useEffect(() => {
     const savedUser = localStorage.getItem('taskflow_user');
     const savedTheme = localStorage.getItem('taskflow_theme');
-    
+
     if (savedUser) {
       try {
         const userData = JSON.parse(savedUser);
@@ -1710,7 +1669,7 @@ function App() {
         localStorage.removeItem('taskflow_user');
       }
     }
-    
+
     if (savedTheme) {
       setIsDarkMode(savedTheme === 'dark');
     }
@@ -1740,8 +1699,8 @@ function App() {
   return (
     <Router>
       <div className={`min-h-screen transition-colors duration-300 ${
-        isDarkMode 
-          ? 'bg-gray-900' 
+        isDarkMode
+          ? 'bg-gray-900'
           : 'bg-gray-50'
       }`}>
         <EnhancedHeader user={user} onLogout={handleLogout} isDarkMode={isDarkMode} setIsDarkMode={handleThemeChange} />
