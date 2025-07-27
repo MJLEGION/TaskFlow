@@ -28,7 +28,7 @@ services:
       dockerfile: Dockerfile.backend
     container_name: taskflow-backend
     ports:
-      - "5000:5000"
+      - "8080:8080"
     environment:
       NODE_ENV: development
       PORT: 5000
