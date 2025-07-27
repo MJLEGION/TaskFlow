@@ -25,7 +25,6 @@ jobs:
         run: |
           if [ ! -d "${{ matrix.service }}" ]; then
             echo "Directory ${{ matrix.service }} does not exist"
-            echo "Repository root contents:"
             ls -la
             exit 1
           fi
@@ -185,3 +184,10 @@ jobs:
         with:
           app-name: "taskflow-backend-legion"
           images: ${{ secrets.ACR_LOGIN_SERVER }}/taskflow-backend:${{ github.sha }}
+
+      - name: Deploy Frontend to Production
+        if: ${{ secrets.AZURE_CLIENT_ID && secrets.ACR_LOGIN_SERVER }}
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: "taskflow-webapp-legion"
+          images: ${{ secrets.ACR_LOGIN_SERVER }}/taskflow-frontend:${{ github.sha }}
