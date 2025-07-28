@@ -8,7 +8,7 @@ on:
     branches:
       - main
     paths:
-      - 'frontend/**' # Adjusted path filter to match actual repo structure
+      - "frontend/**" # Adjusted path filter to match actual repo structure
   workflow_dispatch: {}
 
 jobs:
@@ -23,7 +23,7 @@ jobs:
       - name: Set up Node.js version
         uses: actions/setup-node@v3
         with:
-          node-version: '20.x'
+          node-version: "20.x"
 
       - name: npm install, build, and test
         run: |
@@ -91,10 +91,6 @@ jobs:
       id-token: write # This is required for requesting the JWT
       contents: read # This is required for actions/checkout
 
-    environment:
-      name: 'Production'
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
-
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
@@ -108,16 +104,16 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_B573F7E44E5349029F971BB091EA22AB }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_1ECAF2DD16BA45EFAE4ACBDA3BF7EA9C }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_8D0A92E3CE4E45978662BA8C8AD8A5C6 }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: 'Deploy to Azure Web App'
+      - name: "Deploy to Azure Web App"
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'taskflow-webapp-Legion'
-          slot-name: 'Production'
+          app-name: "taskflow-webapp-Legion"
+          slot-name: "Production"
           package: ./deployment-package
           # Removed startup-command as it's not valid for Windows App Services
           # If your App Service is Linux, you would include:
