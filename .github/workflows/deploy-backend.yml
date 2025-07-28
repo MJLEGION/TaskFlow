@@ -1,13 +1,14 @@
+# DISABLED - Conflicts with main_taskflow-backend-legion.yml
 # Deploy TaskFlow Backend to Azure
-name: Deploy Backend to Azure Web App
+# name: Deploy Backend to Azure Web App
 
-on:
-  push:
-    branches:
-      - main
-    paths:
-      - "TaskFlow/backend/**"
-  workflow_dispatch:
+# on:
+#   push:
+#     branches:
+#       - main
+#     paths:
+#       - "TaskFlow/backend/**"
+#   workflow_dispatch:
 
 jobs:
   build-and-deploy:

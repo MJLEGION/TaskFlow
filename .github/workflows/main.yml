@@ -1,9 +1,10 @@
-name: Deploy to Azure
+# DISABLED - Conflicts with other workflows
+# name: Deploy to Azure
 
-on:
-  push:
-    branches: [main]
-  workflow_dispatch:
+# on:
+#   push:
+#     branches: [main]
+#   workflow_dispatch:
 
 jobs:
   build-and-deploy:
