@@ -345,7 +345,7 @@ const EnhancedHeader = ({ user, onLogout, isDarkMode, onThemeChange, onToggleSid
                 <CheckSquare className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
               </div>
               <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                TaskFlow
+                LegionTaskFlow
               </h1>
             </div>
           </div>
