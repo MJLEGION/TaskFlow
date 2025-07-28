@@ -4,7 +4,7 @@ import {
   Bell, Search, User, LogOut, Settings, Clock, CheckCircle, AlertCircle,
   FolderOpen, Home, CheckSquare, BarChart3, ArrowRight, Eye, EyeOff, Sun, Moon,
   Plus, Edit, Trash2, Calendar, Play, Pause, Square, PieChart, TrendingUp,
-  Filter, X, Save, Target
+  Filter, X, Save, Target, Menu
 } from 'lucide-react';
 import './App.css';
 
@@ -46,10 +46,13 @@ const EnhancedLogin = ({ onLogin }) => {
 
     // Simulate authentication process
     setTimeout(() => {
+      // Create user data object. For registration, take the first part of the name as firstName.
+      const userName = isRegistering ? formData.name : 'Demo User';
       const userData = {
         email: formData.email,
-        name: isRegistering ? formData.name : 'User',
-        id: Math.random().toString(36).substr(2, 9)
+        name: userName,
+        firstName: userName.split(' ')[0], // Used for the header greeting
+        id: Math.random().toString(36).substr(2, 9) // NOTE: Not for production use
       };
 
       // Store user data in localStorage (temporary solution)
@@ -310,7 +313,7 @@ const EnhancedLogin = ({ onLogin }) => {
 };
 
 // Enhanced Header
-const EnhancedHeader = ({ user, onLogout, isDarkMode, setIsDarkMode, onToggleSidebar, isSidebarOpen }) => {
+const EnhancedHeader = ({ user, onLogout, isDarkMode, onThemeChange, onToggleSidebar, isSidebarOpen }) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
 
@@ -377,7 +380,7 @@ const EnhancedHeader = ({ user, onLogout, isDarkMode, setIsDarkMode, onToggleSid
 
             {/* Theme Toggle */}
             <button
-              onClick={() => setIsDarkMode(!isDarkMode)}
+              onClick={() => onThemeChange(!isDarkMode)}
               className={`p-2 rounded-xl transition-all ${
                 isDarkMode
                   ? 'text-gray-300 hover:text-white hover:bg-gray-700'
@@ -424,7 +427,7 @@ const EnhancedHeader = ({ user, onLogout, isDarkMode, setIsDarkMode, onToggleSid
                   }`}>
                     <div className={`font-medium ${
                       isDarkMode ? 'text-gray-100' : 'text-gray-900'
-                    }`}>{user?.firstName} {user?.lastName}</div>
+                    }`}>{user?.name}</div>
                     <div className={`text-sm ${
                       isDarkMode ? 'text-gray-400' : 'text-gray-500'
                     }`}>{user?.email}</div>
@@ -1165,7 +1168,7 @@ const ProjectsPage = ({ isDarkMode }) => {
 
 // Tasks Page Component
 const TasksPage = ({ isDarkMode }) => {
-  const [tasks] = useState([
+  const [tasks, setTasks] = useState([
     {
       id: 1,
       title: 'Design homepage mockup',
@@ -1204,10 +1207,21 @@ const TasksPage = ({ isDarkMode }) => {
     }
   ]);
 
-  const [, setShowCreateModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingTask, setEditingTask] = useState(null);
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterPriority, setFilterPriority] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+
+  const [newTask, setNewTask] = useState({
+    title: '',
+    description: '',
+    project: 'Website Redesign',
+    priority: 'medium',
+    status: 'todo',
+    dueDate: '',
+    assignee: ''
+  });
 
   const filteredTasks = tasks.filter(task => {
     const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -1216,6 +1230,38 @@ const TasksPage = ({ isDarkMode }) => {
     const matchesPriority = filterPriority === 'all' || task.priority === filterPriority;
     return matchesSearch && matchesStatus && matchesPriority;
   });
+  
+  const handleCreateTask = () => {
+    if (!newTask.title.trim()) return;
+    const task = {
+        id: Date.now(),
+        ...newTask,
+        tags: [],
+        timeSpent: 0
+    };
+    setTasks([...tasks, task]);
+    setNewTask({ title: '', description: '', project: 'Website Redesign', priority: 'medium', status: 'todo', dueDate: '', assignee: '' });
+    setShowCreateModal(false);
+  };
+  
+  const handleEditTask = (task) => {
+    setEditingTask(task);
+    setNewTask(task);
+    setShowCreateModal(true);
+  };
+
+  const handleUpdateTask = () => {
+      if (!newTask.title.trim()) return;
+      setTasks(tasks.map(t => t.id === editingTask.id ? { ...t, ...newTask } : t));
+      setEditingTask(null);
+      setNewTask({ title: '', description: '', project: 'Website Redesign', priority: 'medium', status: 'todo', dueDate: '', assignee: '' });
+      setShowCreateModal(false);
+  };
+
+  const handleDeleteTask = (taskId) => {
+    setTasks(tasks.filter(t => t.id !== taskId));
+  };
+
 
   const getPriorityColor = (priority) => {
     switch (priority) {
@@ -1362,14 +1408,18 @@ const TasksPage = ({ isDarkMode }) => {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <button className={`p-2 rounded-lg transition-colors ${
+                <button 
+                  onClick={() => handleEditTask(task)}
+                  className={`p-2 rounded-lg transition-colors ${
                   isDarkMode
                     ? 'hover:bg-gray-700 text-gray-400 hover:text-white'
                     : 'hover:bg-gray-100 text-gray-500 hover:text-gray-700'
                 }`}>
                   <Edit className="h-4 w-4" />
                 </button>
-                <button className={`p-2 rounded-lg transition-colors ${
+                <button 
+                  onClick={() => handleDeleteTask(task.id)}
+                  className={`p-2 rounded-lg transition-colors ${
                   isDarkMode
                     ? 'hover:bg-red-900 text-gray-400 hover:text-red-300'
                     : 'hover:bg-red-50 text-gray-500 hover:text-red-600'
@@ -1381,6 +1431,79 @@ const TasksPage = ({ isDarkMode }) => {
           </div>
         ))}
       </div>
+
+      {/* Create/Edit Task Modal */}
+      {showCreateModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className={`rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                  <div className="p-6">
+                      <div className="flex items-center justify-between mb-6">
+                          <h2 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                              {editingTask ? 'Edit Task' : 'Create New Task'}
+                          </h2>
+                          <button
+                              onClick={() => {
+                                  setShowCreateModal(false);
+                                  setEditingTask(null);
+                                  setNewTask({ title: '', description: '', project: 'Website Redesign', priority: 'medium', status: 'todo', dueDate: '', assignee: '' });
+                              }}
+                              className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-white' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-700'}`}
+                          >
+                              <X className="h-5 w-5" />
+                          </button>
+                      </div>
+
+                      <div className="space-y-4">
+                          <div>
+                              <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Task Title</label>
+                              <input type="text" value={newTask.title} onChange={(e) => setNewTask({ ...newTask, title: e.target.value })} className={`w-full px-3 py-2 border rounded-xl ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-200 text-gray-900'}`} placeholder="Enter task title" />
+                          </div>
+                          <div>
+                              <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Description</label>
+                              <textarea value={newTask.description} onChange={(e) => setNewTask({ ...newTask, description: e.target.value })} rows={3} className={`w-full px-3 py-2 border rounded-xl ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-200 text-gray-900'}`} placeholder="Enter task description" />
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                  <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Project</label>
+                                  <select value={newTask.project} onChange={(e) => setNewTask({ ...newTask, project: e.target.value })} className={`w-full px-3 py-2 border rounded-xl ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-200 text-gray-900'}`}>
+                                      <option>Website Redesign</option>
+                                      <option>Mobile App</option>
+                                      <option>Marketing Campaign</option>
+                                  </select>
+                              </div>
+                              <div>
+                                  <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Priority</label>
+                                  <select value={newTask.priority} onChange={(e) => setNewTask({ ...newTask, priority: e.target.value })} className={`w-full px-3 py-2 border rounded-xl ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-200 text-gray-900'}`}>
+                                      <option value="low">Low</option>
+                                      <option value="medium">Medium</option>
+                                      <option value="high">High</option>
+                                  </select>
+                              </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                  <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Assignee</label>
+                                  <input type="text" value={newTask.assignee} onChange={(e) => setNewTask({ ...newTask, assignee: e.target.value })} className={`w-full px-3 py-2 border rounded-xl ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-200 text-gray-900'}`} placeholder="Assign to..." />
+                              </div>
+                              <div>
+                                  <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Due Date</label>
+                                  <input type="date" value={newTask.dueDate} onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })} className={`w-full px-3 py-2 border rounded-xl ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-200 text-gray-900'}`} />
+                              </div>
+                          </div>
+                      </div>
+
+                      <div className="flex gap-3 mt-6">
+                          <button onClick={() => { setShowCreateModal(false); setEditingTask(null); }} className={`flex-1 px-4 py-2 border rounded-xl transition-colors ${isDarkMode ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'border-gray-200 text-gray-700 hover:bg-gray-50'}`}>
+                              Cancel
+                          </button>
+                          <button onClick={editingTask ? handleUpdateTask : handleCreateTask} className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl">
+                              {editingTask ? 'Update Task' : 'Create Task'}
+                          </button>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      )}
     </div>
   );
 };
@@ -1445,7 +1568,7 @@ const TimeTrackingPage = ({ isDarkMode }) => {
         id: Date.now(),
         project: selectedProject,
         task: selectedTask,
-        duration: (currentTime / 3600).toFixed(2),
+        duration: parseFloat((currentTime / 3600).toFixed(2)), // Ensure duration is a number
         date: new Date().toISOString().split('T')[0]
       };
       setTimeEntries([newEntry, ...timeEntries]);
@@ -1800,7 +1923,7 @@ function App() {
           user={user} 
           onLogout={handleLogout} 
           isDarkMode={isDarkMode} 
-          setIsDarkMode={handleThemeChange}
+          onThemeChange={handleThemeChange}
           onToggleSidebar={toggleSidebar}
           isSidebarOpen={isSidebarOpen}
         />
