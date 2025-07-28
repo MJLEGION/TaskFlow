@@ -310,34 +310,52 @@ const EnhancedLogin = ({ onLogin }) => {
 };
 
 // Enhanced Header
-const EnhancedHeader = ({ user, onLogout, isDarkMode, setIsDarkMode }) => {
+const EnhancedHeader = ({ user, onLogout, isDarkMode, setIsDarkMode, onToggleSidebar, isSidebarOpen }) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
 
   return (
-    <header className={`backdrop-blur-xl shadow-sm border-b sticky top-0 z-50 transition-colors duration-300 ${
+    <header className={`backdrop-blur-xl shadow-sm border-b fixed top-0 left-0 right-0 z-50 transition-colors duration-300 ${
       isDarkMode
         ? 'bg-gray-800/80 border-gray-700/50'
         : 'bg-white/80 border-gray-200/50'
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <div className="flex items-center">
-            <div className="h-8 w-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-3">
-              <CheckSquare className="h-5 w-5 text-white" />
+          {/* Left side - Mobile menu button + Logo */}
+          <div className="flex items-center space-x-4">
+            {/* Mobile menu button */}
+            <button
+              onClick={onToggleSidebar}
+              className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100/10 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500"
+            >
+              {isSidebarOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
+            </button>
+
+            {/* Logo */}
+            <div className="flex items-center">
+              <div className="h-7 w-7 sm:h-8 sm:w-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-2 sm:mr-3">
+                <CheckSquare className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+              </div>
+              <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                TaskFlow
+              </h1>
             </div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              TaskFlow
-            </h1>
           </div>
 
-          <div className="flex-1 max-w-lg mx-8">
-            <div className="relative">
+          {/* Center - Search (Desktop) */}
+          <div className="hidden md:flex flex-1 max-w-lg mx-4 lg:mx-8">
+            <div className="relative w-full">
               <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 ${
                 isDarkMode ? 'text-gray-400' : 'text-gray-400'
               }`} />
               <input
                 type="text"
-                className={`w-full pl-10 pr-4 py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                className={`w-full pl-10 pr-4 py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all sm:text-sm ${
                   isDarkMode
                     ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                     : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-500'
@@ -347,7 +365,16 @@ const EnhancedHeader = ({ user, onLogout, isDarkMode, setIsDarkMode }) => {
             </div>
           </div>
 
-          <div className="flex items-center space-x-4">
+          {/* Right side */}
+          <div className="flex items-center space-x-2 sm:space-x-4">
+            {/* Mobile search button */}
+            <button
+              onClick={() => setShowMobileSearch(!showMobileSearch)}
+              className="md:hidden p-2 rounded-xl text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+            >
+              <Search className="h-5 w-5" />
+            </button>
+
             {/* Theme Toggle */}
             <button
               onClick={() => setIsDarkMode(!isDarkMode)}
@@ -426,13 +453,34 @@ const EnhancedHeader = ({ user, onLogout, isDarkMode, setIsDarkMode }) => {
             </div>
           </div>
         </div>
+
+        {/* Mobile Search Bar */}
+        {showMobileSearch && (
+          <div className="md:hidden px-4 pb-4">
+            <div className="relative">
+              <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-400'
+              }`} />
+              <input
+                type="text"
+                className={`w-full pl-10 pr-4 py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                  isDarkMode
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                    : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-500'
+                }`}
+                placeholder="Search tasks, projects..."
+                autoFocus
+              />
+            </div>
+          </div>
+        )}
       </div>
     </header>
   );
 };
 
 // Enhanced Sidebar
-const EnhancedSidebar = ({ isDarkMode }) => {
+const EnhancedSidebar = ({ isDarkMode, isOpen, onClose }) => {
   const navigation = [
     { name: 'Dashboard', href: '/', icon: Home, color: 'from-blue-500 to-blue-600' },
     { name: 'Projects', href: '/projects', icon: FolderOpen, color: 'from-green-500 to-green-600' },
@@ -441,28 +489,64 @@ const EnhancedSidebar = ({ isDarkMode }) => {
     { name: 'Analytics', href: '/analytics', icon: BarChart3, color: 'from-pink-500 to-pink-600' },
   ];
 
+  const handleNavClick = () => {
+    // Close sidebar on mobile when navigation item is clicked
+    if (window.innerWidth < 1024) {
+      onClose();
+    }
+  };
+
   return (
-    <div className={`w-64 shadow-sm h-screen border-r transition-colors duration-300 ${
-      isDarkMode
-        ? 'bg-gray-800 border-gray-700'
-        : 'bg-white border-gray-200'
-    }`}>
-      <nav className="mt-6 px-3">
-        <div className="space-y-2">
-          {navigation.map((item) => (
-            <NavLink
-              key={item.name}
-              to={item.href}
-              className={({ isActive }) =>
-                `group flex items-center px-3 py-3 text-sm font-medium rounded-xl transition-all ${
-                  isActive
-                    ? 'bg-gradient-to-r ' + item.color + ' text-white shadow-lg transform scale-105'
-                    : isDarkMode
-                      ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                }`
-              }
-            >
+    <>
+      {/* Mobile overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 z-40 lg:hidden"
+          onClick={onClose}
+        >
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-75" />
+        </div>
+      )}
+
+      {/* Sidebar */}
+      <div className={`
+        fixed inset-y-0 left-0 z-50 w-64 shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 lg:shadow-sm border-r transition-colors duration-300
+        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+        ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}
+      `}>
+        {/* Mobile close button */}
+        <div className="lg:hidden flex items-center justify-between p-4 border-b border-gray-200">
+          <h2 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Menu</h2>
+          <button
+            onClick={onClose}
+            className={`p-2 rounded-md transition-colors ${
+              isDarkMode 
+                ? 'text-gray-400 hover:text-gray-300 hover:bg-gray-700' 
+                : 'text-gray-400 hover:text-gray-500 hover:bg-gray-100'
+            }`}
+          >
+            <X className="h-6 w-6" />
+          </button>
+        </div>
+
+        {/* Navigation */}
+        <nav className="mt-6 px-3 pb-4 overflow-y-auto h-full">
+          <div className="space-y-2">
+            {navigation.map((item) => (
+              <NavLink
+                key={item.name}
+                to={item.href}
+                onClick={handleNavClick}
+                className={({ isActive }) =>
+                  `group flex items-center px-3 py-3 text-sm font-medium rounded-xl transition-all ${
+                    isActive
+                      ? 'bg-gradient-to-r ' + item.color + ' text-white shadow-lg transform scale-105'
+                      : isDarkMode
+                        ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  }`
+                }
+              >
               {({ isActive }) => (
                 <>
                   <item.icon className={`mr-3 h-5 w-5 ${
@@ -1653,6 +1737,7 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
   const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Check for existing user session on app load
   React.useEffect(() => {
@@ -1692,6 +1777,14 @@ function App() {
     localStorage.setItem('taskflow_theme', darkMode ? 'dark' : 'light');
   };
 
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
+  const closeSidebar = () => {
+    setIsSidebarOpen(false);
+  };
+
   if (!isAuthenticated) {
     return <EnhancedLogin onLogin={handleLogin} />;
   }
@@ -1703,18 +1796,31 @@ function App() {
           ? 'bg-gray-900'
           : 'bg-gray-50'
       }`}>
-        <EnhancedHeader user={user} onLogout={handleLogout} isDarkMode={isDarkMode} setIsDarkMode={handleThemeChange} />
-        <div className="flex">
-          <EnhancedSidebar isDarkMode={isDarkMode} />
-          <main className="flex-1">
-            <Routes>
-              <Route path="/" element={<EnhancedDashboard isDarkMode={isDarkMode} />} />
-              <Route path="/projects" element={<ProjectsPage isDarkMode={isDarkMode} />} />
-              <Route path="/tasks" element={<TasksPage isDarkMode={isDarkMode} />} />
-              <Route path="/time" element={<TimeTrackingPage isDarkMode={isDarkMode} />} />
-              <Route path="/analytics" element={<AnalyticsPage isDarkMode={isDarkMode} />} />
-              <Route path="*" element={<Navigate to="/" />} />
-            </Routes>
+        <EnhancedHeader 
+          user={user} 
+          onLogout={handleLogout} 
+          isDarkMode={isDarkMode} 
+          setIsDarkMode={handleThemeChange}
+          onToggleSidebar={toggleSidebar}
+          isSidebarOpen={isSidebarOpen}
+        />
+        <div className="flex h-screen pt-16">
+          <EnhancedSidebar 
+            isDarkMode={isDarkMode} 
+            isOpen={isSidebarOpen}
+            onClose={closeSidebar}
+          />
+          <main className="flex-1 overflow-auto lg:ml-0">
+            <div className="max-w-7xl mx-auto">
+              <Routes>
+                <Route path="/" element={<EnhancedDashboard isDarkMode={isDarkMode} />} />
+                <Route path="/projects" element={<ProjectsPage isDarkMode={isDarkMode} />} />
+                <Route path="/tasks" element={<TasksPage isDarkMode={isDarkMode} />} />
+                <Route path="/time" element={<TimeTrackingPage isDarkMode={isDarkMode} />} />
+                <Route path="/analytics" element={<AnalyticsPage isDarkMode={isDarkMode} />} />
+                <Route path="*" element={<Navigate to="/" />} />
+              </Routes>
+            </div>
           </main>
         </div>
       </div>

@@ -95,32 +95,32 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 p-4 sm:p-6 lg:p-8">
       {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-lg p-6 text-white">
-        <h1 className="text-3xl font-bold">Welcome back!</h1>
-        <p className="mt-2 text-primary-100">
+      <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-lg p-4 sm:p-6 text-white">
+        <h1 className="text-2xl sm:text-3xl font-bold">Welcome back!</h1>
+        <p className="mt-2 text-sm sm:text-base text-primary-100">
           Here's what's happening with your projects today.
         </p>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
         {statCards.map((stat) => (
-          <div key={stat.name} className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
+          <div key={stat.name} className="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-200">
+            <div className="p-3 sm:p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className={`${stat.color} rounded-md p-3`}>
-                    <stat.icon className="h-6 w-6 text-white" />
+                  <div className={`${stat.color} rounded-md p-2 sm:p-3`}>
+                    <stat.icon className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
                   </div>
                 </div>
-                <div className="ml-5 w-0 flex-1">
+                <div className="ml-3 sm:ml-5 w-0 flex-1 min-w-0">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
+                    <dt className="text-xs sm:text-sm font-medium text-gray-500 truncate">
                       {stat.name}
                     </dt>
-                    <dd className="text-lg font-medium text-gray-900">
+                    <dd className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">
                       {stat.value}
                     </dd>
                   </dl>
@@ -132,35 +132,38 @@ const Dashboard = () => {
       </div>
 
       {/* Projects and Tasks Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
         {/* Recent Projects */}
-        <div className="bg-white shadow rounded-lg">
-          <div className="px-6 py-4 border-b border-gray-200">
+        <div className="bg-white shadow rounded-lg hover:shadow-md transition-shadow duration-200">
+          <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium text-gray-900">Recent Projects</h3>
+              <h3 className="text-base sm:text-lg font-medium text-gray-900">Recent Projects</h3>
               <Link
                 to="/projects"
-                className="text-primary-600 hover:text-primary-500 text-sm font-medium"
+                className="text-primary-600 hover:text-primary-500 text-xs sm:text-sm font-medium transition-colors duration-200"
               >
                 View all
               </Link>
             </div>
           </div>
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             {projects.length > 0 ? (
-              <div className="grid grid-cols-1 gap-4">
+              <div className="grid grid-cols-1 gap-3 sm:gap-4">
                 {projects.map((project) => (
                   <ProjectCard key={project.id} project={project} compact />
                 ))}
               </div>
             ) : (
-              <div className="text-center py-6">
-                <p className="text-gray-500">No projects yet</p>
+              <div className="text-center py-8 sm:py-12">
+                <div className="mx-auto h-12 w-12 text-gray-400 mb-4">
+                  <FolderOpen className="h-full w-full" />
+                </div>
+                <p className="text-sm sm:text-base text-gray-500 mb-4">No projects yet</p>
                 <Link
                   to="/projects"
-                  className="mt-2 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-primary-700 bg-primary-100 hover:bg-primary-200"
+                  className="inline-flex items-center px-3 sm:px-4 py-2 border border-transparent text-xs sm:text-sm font-medium rounded-md text-primary-700 bg-primary-100 hover:bg-primary-200 transition-colors duration-200"
                 >
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                   Create your first project
                 </Link>
               </div>
@@ -169,19 +172,19 @@ const Dashboard = () => {
         </div>
 
         {/* Recent Tasks */}
-        <div className="bg-white shadow rounded-lg">
-          <div className="px-6 py-4 border-b border-gray-200">
+        <div className="bg-white shadow rounded-lg hover:shadow-md transition-shadow duration-200">
+          <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium text-gray-900">Active Tasks</h3>
+              <h3 className="text-base sm:text-lg font-medium text-gray-900">Active Tasks</h3>
               <Link
                 to="/tasks"
-                className="text-primary-600 hover:text-primary-500 text-sm font-medium"
+                className="text-primary-600 hover:text-primary-500 text-xs sm:text-sm font-medium transition-colors duration-200"
               >
                 View all
               </Link>
             </div>
           </div>
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             {tasks.length > 0 ? (
               <div className="space-y-3">
                 {tasks.map((task) => (
@@ -189,13 +192,16 @@ const Dashboard = () => {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-6">
-                <p className="text-gray-500">No active tasks</p>
+              <div className="text-center py-8 sm:py-12">
+                <div className="mx-auto h-12 w-12 text-gray-400 mb-4">
+                  <CheckCircle className="h-full w-full" />
+                </div>
+                <p className="text-sm sm:text-base text-gray-500 mb-4">No active tasks</p>
                 <Link
                   to="/projects"
-                  className="mt-2 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-primary-700 bg-primary-100 hover:bg-primary-200"
+                  className="inline-flex items-center px-3 sm:px-4 py-2 border border-transparent text-xs sm:text-sm font-medium rounded-md text-primary-700 bg-primary-100 hover:bg-primary-200 transition-colors duration-200"
                 >
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                   Add a task
                 </Link>
               </div>
