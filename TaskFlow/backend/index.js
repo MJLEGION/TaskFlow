@@ -1,5 +1,24 @@
 // TaskFlow/backend/index.js
 
+// Initialize Application Insights first (must be before other imports)
+const appInsights = require('applicationinsights');
+if (process.env.APPLICATIONINSIGHTS_CONNECTION_STRING) {
+  appInsights.setup(process.env.APPLICATIONINSIGHTS_CONNECTION_STRING)
+    .setAutoDependencyCorrelation(true)
+    .setAutoCollectRequests(true)
+    .setAutoCollectPerformance(true, true)
+    .setAutoCollectExceptions(true)
+    .setAutoCollectDependencies(true)
+    .setAutoCollectConsole(true)
+    .setUseDiskRetryCaching(true)
+    .setSendLiveMetrics(true)
+    .start();
+  
+  console.log('✅ Application Insights initialized');
+} else {
+  console.log('⚠️ Application Insights not configured - missing connection string');
+}
+
 // Import the Express application instance from server.js
 const app = require('./src/server');
 const dotenv = require('dotenv'); // Import dotenv for environment variables

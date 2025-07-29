@@ -43,13 +43,47 @@ app.use('/api/auth', authRoutes);
 app.use('/api/tasks', tasksRoutes);
 // app.use('/api/users', usersRoutes); // Uncomment if you have a users route
 
-// Health Check Endpoint
-// This endpoint is used to verify that the server is running and responsive.
+// Enhanced Health Check Endpoint with monitoring
 app.get('/health', (req, res) => {
-  res.status(200).json({
+  const healthData = {
     status: 'OK',
     timestamp: new Date().toISOString(),
-    message: 'Backend server is healthy and operational.'
+    message: 'Backend server is healthy and operational.',
+    version: process.env.npm_package_version || '1.0.0',
+    environment: process.env.NODE_ENV || 'development',
+    uptime: process.uptime(),
+    memory: process.memoryUsage(),
+    monitoring: {
+      applicationInsights: !!(process.env.APPLICATIONINSIGHTS_CONNECTION_STRING || process.env.APPINSIGHTS_INSTRUMENTATIONKEY)
+    }
+  };
+
+  // Log health check for monitoring
+  if (appInsights.defaultClient) {
+    appInsights.defaultClient.trackEvent({
+      name: 'HealthCheck',
+      properties: {
+        status: healthData.status,
+        uptime: healthData.uptime,
+        environment: healthData.environment
+      }
+    });
+  }
+
+  res.status(200).json(healthData);
+});
+
+// API Health endpoint for detailed monitoring
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    api: 'TaskFlow Backend API',
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    endpoints: {
+      auth: '/api/auth',
+      tasks: '/api/tasks',
+      health: '/health'
+    }
   });
 });
 

@@ -308,24 +308,112 @@ You have already tried the main available regions.
 
 ## Live Environments
 
-- **Staging:** https://taskflow-frontend-staging.azurewebsites.net
-- **Production:** https://taskflow-frontend-prod.azurewebsites.net
-- **Backend Staging:** https://taskflow-backend-staging.azurewebsites.net
-- **Backend Production:** https://taskflow-backend-prod.azurewebsites.net
+### Production Environment
+- **Production URL:** https://taskflow-webapp-legion-ghahajc0d4a7byaf.ukwest-01.azurewebsites.net/
+- **Health Check:** https://taskflow-webapp-legion-ghahajc0d4a7byaf.ukwest-01.azurewebsites.net/health
+- **API Health:** https://taskflow-webapp-legion-ghahajc0d4a7byaf.ukwest-01.azurewebsites.net/api/health
+
+### Staging Environment
+- **Staging URL:** https://taskflow-webapp-staging.azurewebsites.net/
+- **Health Check:** https://taskflow-webapp-staging.azurewebsites.net/health
+- **API Health:** https://taskflow-webapp-staging.azurewebsites.net/api/health
+
+### Deployment Status
+- ✅ **Continuous Deployment:** Fully automated pipeline
+- ✅ **Security Scanning:** npm audit + Trivy container scanning
+- ✅ **Monitoring:** Azure Application Insights with custom alerts
+- ✅ **Health Checks:** Automated health monitoring
+- ✅ **Release Management:** Automated versioning and CHANGELOG updates
+
+---
+
+## Continuous Deployment Pipeline
+
+### Pipeline Overview
+The TaskFlow project implements a complete **Continuous Deployment (CD) pipeline** with **DevSecOps integration**:
+
+```
+
+Code Push → Build & Test → Security Scan → Container Build → Deploy → Monitor
+
+```
+
+### Pipeline Stages
+
+#### 1. 🔨 Build & Test
+- **Linting:** ESLint code quality checks
+- **Testing:** Jest unit tests with coverage reporting
+- **Build:** Application compilation and artifact creation
+- **Coverage:** Codecov integration for test coverage tracking
+
+#### 2. 🔒 Security Scanning (DevSecOps)
+- **Dependency Scanning:** npm audit for vulnerability detection
+- **Container Scanning:** Trivy security scanning for Docker images
+- **SARIF Reports:** Security findings uploaded to GitHub Security tab
+- **Automated Remediation:** Security issues documented and tracked
+
+#### 3. 🐳 Container Build & Push
+- **Multi-stage Builds:** Optimized Docker images
+- **Registry Push:** Automated push to Azure Container Registry
+- **Image Tagging:** Environment-specific tagging (latest, develop, SHA)
+- **Build Artifacts:** Secure storage and versioning
+
+#### 4. 🚀 Deployment Automation
+- **Staging Deployment:** Automatic deployment on `develop` branch
+- **Production Deployment:** Manual approval required for `main` branch
+- **Health Checks:** Automated post-deployment verification
+- **Rollback Capability:** Quick rollback on deployment failures
+
+#### 5. 📊 Monitoring & Alerts
+- **Application Insights:** Real-time performance monitoring
+- **Custom Alerts:** High error rate and downtime notifications
+- **Health Endpoints:** Continuous health monitoring
+- **Dashboard:** Live metrics and system status
+
+### Deployment Environments
+
+| Environment | Branch | URL | Deployment |
+|-------------|--------|-----|------------|
+| **Staging** | `develop` | https://taskflow-webapp-staging.azurewebsites.net/ | Automatic |
+| **Production** | `main` | https://taskflow-webapp-legion-ghahajc0d4a7byaf.ukwest-01.azurewebsites.net/ | Manual Approval |
+
+### Security Integration
+- ✅ **Dependency Vulnerability Scanning** with npm audit
+- ✅ **Container Image Security Scanning** with Trivy
+- ✅ **Security Results Documentation** in GitHub Security tab
+- ✅ **Automated Security Reporting** in pipeline summaries
 
 ---
 
 ## Monitoring & Observability
 
-This project uses **Azure Application Insights** for monitoring and logging.
-- All backend requests, dependencies, exceptions, and logs are automatically tracked.
-- Access the Application Insights dashboard via the Azure Portal for live metrics, traces, and alerts.
-- At least one alert is configured (e.g., for error rate or downtime).
+### Application Insights Integration
+This project uses **Azure Application Insights** for comprehensive monitoring:
 
-**How to view logs and metrics:**
-1. Go to the Azure Portal > Application Insights resource for this project.
-2. Use the "Live Metrics Stream" for real-time monitoring.
-3. View failures, performance, and custom logs in the dashboard.
+- 📊 **Real-time Metrics:** Live performance and usage statistics
+- 🔍 **Request Tracking:** All HTTP requests automatically logged
+- ⚠️ **Exception Monitoring:** Automatic error detection and alerting
+- 📈 **Custom Events:** Business logic tracking and analytics
+- 🚨 **Alerts:** Configured for high error rates and system health
+
+### Monitoring Features
+- **Live Metrics Stream:** Real-time application performance
+- **Application Map:** Visual dependency tracking
+- **Failure Analysis:** Detailed error investigation tools
+- **Performance Insights:** Response time and throughput analysis
+- **Custom Dashboards:** Tailored monitoring views
+
+### Health Monitoring
+- **Health Endpoints:** `/health` and `/api/health` for system status
+- **Uptime Monitoring:** Continuous availability checks
+- **Memory Usage:** System resource monitoring
+- **Version Tracking:** Deployment version information
+
+**Access Monitoring:**
+1. Azure Portal → Application Insights → TaskFlow resource
+2. Live Metrics Stream for real-time data
+3. Failures tab for error analysis
+4. Performance tab for response time metrics
 
 ---
 

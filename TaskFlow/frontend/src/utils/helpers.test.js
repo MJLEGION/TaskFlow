@@ -41,7 +41,7 @@ describe('Helper Functions', () => {
     it('should truncate long text', () => {
       const longText = 'This is a very long text that should be truncated';
       const result = truncateText(longText, 20);
-      expect(result).toBe('This is a very long...');
+      expect(result).toBe('This is a very long ...');
       expect(result.length).toBe(23); // 20 + '...'
     });
 
