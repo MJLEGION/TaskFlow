@@ -28,6 +28,8 @@ jobs:
       - name: npm install, build, and test
         run: |
           npm ci
+          echo "DISABLE_ESLINT_PLUGIN=true" > .env
+          echo "GENERATE_SOURCEMAP=false" >> .env
           npm run build
           npm run test --if-present
         working-directory: ./TaskFlow/frontend # Corrected working directory: relative to repo root

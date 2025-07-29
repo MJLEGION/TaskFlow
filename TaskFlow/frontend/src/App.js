@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, NavLink, Link } from 'react-router-dom';
 import {
   Bell, Search, User, LogOut, Settings, Clock, CheckCircle, AlertCircle,
@@ -585,23 +585,24 @@ const EnhancedSidebar = ({ isDarkMode, isOpen, onClose }) => {
                   }`
                 }
               >
-              {({ isActive }) => (
-                <>
-                  <item.icon className={`mr-3 h-5 w-5 ${
-                    isActive
-                      ? 'text-white'
-                      : isDarkMode
-                        ? 'text-gray-400'
-                        : 'text-gray-400'
-                  }`} />
-                  {item.name}
-                </>
-              )}
-            </NavLink>
-          ))}
+                {({ isActive }) => (
+                  <>
+                    <item.icon className={`mr-3 h-5 w-5 ${
+                      isActive
+                        ? 'text-white'
+                        : isDarkMode
+                          ? 'text-gray-400'
+                          : 'text-gray-400'
+                    }`} />
+                    {item.name}
+                  </>
+                )}
+              </NavLink>
+            ))}
         </div>
       </nav>
     </div>
+    </>
   );
 };
 
@@ -1077,7 +1078,7 @@ const EnhancedSettings = ({ user, onUpdateUser, isDarkMode }) => {
     totalTimeLogged: 0
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (user) {
       const userStats = localStorage.getItem(`taskflow_stats_${user.id}`);
       if (userStats) {
@@ -2204,7 +2205,7 @@ const TimeTrackingPage = ({ isDarkMode }) => {
   };
 
   // Timer functionality with useEffect
-  React.useEffect(() => {
+  useEffect(() => {
     let interval = null;
     if (isTimerRunning) {
       interval = setInterval(() => {
@@ -2537,7 +2538,7 @@ function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Check for existing user session on app load
-  React.useEffect(() => {
+  useEffect(() => {
     const savedUser = localStorage.getItem('taskflow_user');
     const savedTheme = localStorage.getItem('taskflow_theme');
 
