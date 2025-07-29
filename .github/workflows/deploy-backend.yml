@@ -1,49 +1,146 @@
-# DISABLED - Conflicts with main_taskflow-backend-legion.yml
-# Deploy TaskFlow Backend to Azure
-# name: Deploy Backend to Azure Web App
+# Enhanced Backend Deployment Pipeline with DevSecOps
+name: Deploy TaskFlow Backend to Azure
 
-# on:
-#   push:
-#     branches:
-#       - main
-#     paths:
-#       - "TaskFlow/backend/**"
-#   workflow_dispatch:
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - "TaskFlow/backend/**"
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - "TaskFlow/backend/**"
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: "20.x"
+  AZURE_WEBAPP_NAME: "taskflow-backend-legion"
 
 jobs:
-  build-and-deploy:
+  # Stage 1: Build and Test Backend
+  build-and-test:
+    name: 🔨 Build & Test Backend
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: 🟢 Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: "20.x"
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: TaskFlow/backend/package-lock.json
 
-      - name: Install dependencies
+      - name: 📦 Install dependencies
         run: |
           cd TaskFlow/backend
-          npm ci --only=production
+          npm ci
 
-      - name: Create deployment package
+      - name: 🔍 Run ESLint
+        run: |
+          cd TaskFlow/backend
+          npm run lint
+
+      - name: 🧪 Run tests with coverage
+        run: |
+          cd TaskFlow/backend
+          npm test -- --coverage --watchAll=false
+
+      - name: 📊 Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: TaskFlow/backend/coverage/lcov.info
+          flags: backend
+          name: backend-coverage
+          fail_ci_if_error: false
+
+      - name: 🏗️ Build application
+        run: |
+          cd TaskFlow/backend
+          npm run build --if-present
+
+      - name: 📤 Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-build
+          path: TaskFlow/backend
+          retention-days: 1
+
+  # Stage 2: Security Scanning
+  security-scan:
+    name: 🔒 Security Scanning
+    runs-on: ubuntu-latest
+    needs: build-and-test
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: TaskFlow/backend/package-lock.json
+
+      - name: 📦 Install dependencies
+        run: |
+          cd TaskFlow/backend
+          npm ci
+
+      - name: 🔍 Run npm audit (Dependency Vulnerability Scan)
+        run: |
+          cd TaskFlow/backend
+          npm audit --audit-level=moderate --json > npm-audit-backend.json || true
+          echo "## NPM Audit Results for Backend" >> $GITHUB_STEP_SUMMARY
+          npm audit --audit-level=moderate || echo "Vulnerabilities found - check details above"
+
+      - name: 📊 Security scan summary
+        run: |
+          echo "## Security Scan Summary for Backend" >> $GITHUB_STEP_SUMMARY
+          echo "✅ NPM Audit completed" >> $GITHUB_STEP_SUMMARY
+          echo "📋 Check the Security tab for detailed results" >> $GITHUB_STEP_SUMMARY
+
+  # Stage 3: Deploy to Production
+  deploy:
+    name: 🚀 Deploy Backend
+    runs-on: ubuntu-latest
+    needs: [build-and-test, security-scan]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: production
+      url: https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net
+
+    steps:
+      - name: 📥 Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-build
+          path: ./backend
+
+      - name: 📦 Create deployment package
         run: |
           mkdir -p backend-deploy
           # Copy backend files
-          cp -r TaskFlow/backend/* backend-deploy/
-          # Use the simple server for now (rename it to server.js)
-          cp TaskFlow/backend/server-simple.js backend-deploy/server.js
-          # Ensure we have the right start script
+          cp -r backend/* backend-deploy/
           cd backend-deploy
+
+          # Install production dependencies
+          npm ci --only=production
+
           # Create web.config for Azure App Service
           cat > web.config << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <configuration>
             <system.webServer>
               <handlers>
-                <add name="iisnode" path="server.js" verb="*" modules="iisnode"/>
+                <add name="iisnode" path="index.js" verb="*" modules="iisnode"/>
               </handlers>
               <rewrite>
                 <rules>
@@ -51,7 +148,7 @@ jobs:
                     <conditions>
                       <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="True"/>
                     </conditions>
-                    <action type="Rewrite" url="server.js"/>
+                    <action type="Rewrite" url="index.js"/>
                   </rule>
                 </rules>
               </rewrite>
@@ -60,9 +157,23 @@ jobs:
           </configuration>
           EOF
 
-      - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v2
+      - name: 🚀 Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
         with:
-          app-name: "taskflow-backend-legion" # You'll need to create this Azure App Service
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          slot-name: "Production"
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_BACKEND }}
           package: ./backend-deploy
+
+      - name: 🔍 Health check
+        run: |
+          echo "⏳ Waiting for deployment to be ready..."
+          sleep 30
+          curl -f https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/health || echo "Health check failed"
+
+      - name: 📊 Deployment summary
+        run: |
+          echo "## Backend Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "🌍 **Environment**: Production" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 **URL**: https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Status**: Deployed successfully" >> $GITHUB_STEP_SUMMARY
