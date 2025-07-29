@@ -4,9 +4,800 @@ import {
   Bell, Search, User, LogOut, Settings, Clock, CheckCircle, AlertCircle,
   FolderOpen, Home, CheckSquare, BarChart3, ArrowRight, Eye, EyeOff, Sun, Moon,
   Plus, Edit, Trash2, Calendar, Play, Pause, Square, PieChart, TrendingUp,
-  Filter, X, Save, Target, Menu
+  Filter, X, Save, Target, Menu, Users, FileText, Download, Upload, Zap,
+  MessageSquare, Paperclip, CalendarDays, Search as SearchIcon, Tag,
+  Copy, Archive, Star, Share2, Activity, Workflow, Template
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import toast, { Toaster } from 'react-hot-toast';
 import './App.css';
+
+// Notification System
+const NotificationCenter = ({ isDarkMode, notifications, onMarkAsRead, onClearAll }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={`relative p-2 rounded-lg transition-colors ${
+          isDarkMode
+            ? 'hover:bg-gray-700 text-gray-300'
+            : 'hover:bg-gray-100 text-gray-600'
+        }`}
+      >
+        <Bell className="h-5 w-5" />
+        {notifications.filter(n => !n.read).length > 0 && (
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+            {notifications.filter(n => !n.read).length}
+          </span>
+        )}
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className={`absolute right-0 mt-2 w-80 rounded-xl shadow-lg border z-50 ${
+              isDarkMode
+                ? 'bg-gray-800 border-gray-700'
+                : 'bg-white border-gray-200'
+            }`}
+          >
+            <div className="p-4 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                  Notifications
+                </h3>
+                <button
+                  onClick={onClearAll}
+                  className="text-sm text-blue-500 hover:text-blue-600"
+                >
+                  Clear All
+                </button>
+              </div>
+            </div>
+            <div className="max-h-96 overflow-y-auto">
+              {notifications.length === 0 ? (
+                <div className="p-4 text-center text-gray-500">
+                  No notifications
+                </div>
+              ) : (
+                notifications.map((notification) => (
+                  <div
+                    key={notification.id}
+                    className={`p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer ${
+                      !notification.read ? 'bg-blue-50' : ''
+                    }`}
+                    onClick={() => onMarkAsRead(notification.id)}
+                  >
+                    <div className="flex items-start space-x-3">
+                      <div className={`p-2 rounded-lg ${notification.type === 'success' ? 'bg-green-100 text-green-600' : 
+                        notification.type === 'warning' ? 'bg-yellow-100 text-yellow-600' : 'bg-blue-100 text-blue-600'}`}>
+                        {notification.type === 'success' ? <CheckCircle className="h-4 w-4" /> :
+                         notification.type === 'warning' ? <AlertCircle className="h-4 w-4" /> : <Bell className="h-4 w-4" />}
+                      </div>
+                      <div className="flex-1">
+                        <p className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                          {notification.title}
+                        </p>
+                        <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                          {notification.message}
+                        </p>
+                        <p className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-400'} mt-1`}>
+                          {notification.time}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+// Advanced Search Component
+const AdvancedSearch = ({ isDarkMode, onSearch, onFilter }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState({
+    priority: 'all',
+    status: 'all',
+    assignee: 'all',
+    dateRange: 'all'
+  });
+
+  const handleSearch = () => {
+    onSearch(searchTerm, filters);
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="relative">
+      <div className="flex items-center space-x-2">
+        <div className="relative">
+          <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search tasks, projects..."
+            className={`pl-10 pr-4 py-2 rounded-lg border ${
+              isDarkMode
+                ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                : 'bg-white border-gray-200 text-gray-900 placeholder-gray-500'
+            }`}
+            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+          />
+        </div>
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className={`p-2 rounded-lg border ${
+            isDarkMode
+              ? 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600'
+              : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+          }`}
+        >
+          <Filter className="h-4 w-4" />
+        </button>
+      </div>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className={`absolute right-0 mt-2 w-80 rounded-xl shadow-lg border z-50 p-4 ${
+              isDarkMode
+                ? 'bg-gray-800 border-gray-700'
+                : 'bg-white border-gray-200'
+            }`}
+          >
+            <h3 className={`font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+              Advanced Filters
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Priority
+                </label>
+                <select
+                  value={filters.priority}
+                  onChange={(e) => setFilters({...filters, priority: e.target.value})}
+                  className={`w-full px-3 py-2 rounded-lg border ${
+                    isDarkMode
+                      ? 'bg-gray-700 border-gray-600 text-white'
+                      : 'bg-white border-gray-200 text-gray-900'
+                  }`}
+                >
+                  <option value="all">All Priorities</option>
+                  <option value="high">High</option>
+                  <option value="medium">Medium</option>
+                  <option value="low">Low</option>
+                </select>
+              </div>
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Status
+                </label>
+                <select
+                  value={filters.status}
+                  onChange={(e) => setFilters({...filters, status: e.target.value})}
+                  className={`w-full px-3 py-2 rounded-lg border ${
+                    isDarkMode
+                      ? 'bg-gray-700 border-gray-600 text-white'
+                      : 'bg-white border-gray-200 text-gray-900'
+                  }`}
+                >
+                  <option value="all">All Status</option>
+                  <option value="todo">To Do</option>
+                  <option value="in-progress">In Progress</option>
+                  <option value="completed">Completed</option>
+                </select>
+              </div>
+              <div className="flex space-x-2">
+                <button
+                  onClick={handleSearch}
+                  className="flex-1 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+                >
+                  Apply Filters
+                </button>
+                <button
+                  onClick={() => {
+                    setFilters({ priority: 'all', status: 'all', assignee: 'all', dateRange: 'all' });
+                    setSearchTerm('');
+                  }}
+                  className={`px-4 py-2 rounded-lg border ${
+                    isDarkMode
+                      ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
+                      : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  Reset
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+// Team Collaboration Component
+const TeamCollaboration = ({ isDarkMode, task, onAssignTask, onAddComment }) => {
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [newComment, setNewComment] = useState('');
+  const [selectedMember, setSelectedMember] = useState('');
+
+  const teamMembers = [
+    { id: 1, name: 'John Doe', email: 'john@example.com', avatar: '👨‍💻', role: 'Developer' },
+    { id: 2, name: 'Jane Smith', email: 'jane@example.com', avatar: '👩‍🎨', role: 'Designer' },
+    { id: 3, name: 'Mike Johnson', email: 'mike@example.com', avatar: '👨‍💼', role: 'Manager' },
+    { id: 4, name: 'Sarah Wilson', email: 'sarah@example.com', avatar: '👩‍💻', role: 'Developer' }
+  ];
+
+  const handleAssignTask = () => {
+    if (selectedMember) {
+      const member = teamMembers.find(m => m.id === parseInt(selectedMember));
+      onAssignTask(task.id, member);
+      setShowAssignModal(false);
+      toast.success(`Task assigned to ${member.name}`);
+    }
+  };
+
+  const handleAddComment = () => {
+    if (newComment.trim()) {
+      onAddComment(task.id, {
+        id: Date.now(),
+        text: newComment,
+        author: 'Current User',
+        timestamp: new Date().toLocaleString()
+      });
+      setNewComment('');
+      toast.success('Comment added');
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Assignment Section */}
+      <div className={`p-4 rounded-lg border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+        <div className="flex items-center justify-between mb-3">
+          <h4 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            Team Assignment
+          </h4>
+          <button
+            onClick={() => setShowAssignModal(true)}
+            className="flex items-center space-x-2 px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          >
+            <Users className="h-4 w-4" />
+            <span>Assign</span>
+          </button>
+        </div>
+        
+        {task.assignee && (
+          <div className="flex items-center space-x-3">
+            <span className="text-2xl">{task.assignee.avatar}</span>
+            <div>
+              <p className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                {task.assignee.name}
+              </p>
+              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                {task.assignee.role}
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Comments Section */}
+      <div className={`p-4 rounded-lg border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+        <h4 className={`font-medium mb-3 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          Comments
+        </h4>
+        
+        <div className="space-y-3 mb-4">
+          {task.comments?.map((comment) => (
+            <div key={comment.id} className={`p-3 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+              <div className="flex items-center justify-between mb-2">
+                <span className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                  {comment.author}
+                </span>
+                <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  {comment.timestamp}
+                </span>
+              </div>
+              <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                {comment.text}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex space-x-2">
+          <input
+            type="text"
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            placeholder="Add a comment..."
+            className={`flex-1 px-3 py-2 rounded-lg border ${
+              isDarkMode
+                ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                : 'bg-white border-gray-200 text-gray-900 placeholder-gray-500'
+            }`}
+            onKeyPress={(e) => e.key === 'Enter' && handleAddComment()}
+          />
+          <button
+            onClick={handleAddComment}
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          >
+            <MessageSquare className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Assignment Modal */}
+      <AnimatePresence>
+        {showAssignModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          >
+            <motion.div
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.9 }}
+              className={`rounded-xl shadow-xl max-w-md w-full mx-4 ${
+                isDarkMode ? 'bg-gray-800' : 'bg-white'
+              }`}
+            >
+              <div className="p-6">
+                <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                  Assign Task to Team Member
+                </h3>
+                
+                <div className="space-y-3 mb-6">
+                  {teamMembers.map((member) => (
+                    <label key={member.id} className="flex items-center space-x-3 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="assignee"
+                        value={member.id}
+                        onChange={(e) => setSelectedMember(e.target.value)}
+                        className="text-blue-500"
+                      />
+                      <span className="text-2xl">{member.avatar}</span>
+                      <div>
+                        <p className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                          {member.name}
+                        </p>
+                        <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                          {member.role} • {member.email}
+                        </p>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+
+                <div className="flex space-x-3">
+                  <button
+                    onClick={handleAssignTask}
+                    className="flex-1 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+                  >
+                    Assign Task
+                  </button>
+                  <button
+                    onClick={() => setShowAssignModal(false)}
+                    className={`px-4 py-2 rounded-lg border ${
+                      isDarkMode
+                        ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
+                        : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+// File Attachment Component
+const FileAttachment = ({ isDarkMode, onFileUpload, attachments = [] }) => {
+  const [dragActive, setDragActive] = useState(false);
+
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFiles(e.dataTransfer.files);
+    }
+  };
+
+  const handleChange = (e) => {
+    e.preventDefault();
+    if (e.target.files && e.target.files[0]) {
+      handleFiles(e.target.files);
+    }
+  };
+
+  const handleFiles = (files) => {
+    Array.from(files).forEach(file => {
+      const attachment = {
+        id: Date.now() + Math.random(),
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        uploadDate: new Date().toLocaleDateString()
+      };
+      onFileUpload(attachment);
+      toast.success(`File "${file.name}" uploaded successfully`);
+    });
+  };
+
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Upload Area */}
+      <div
+        className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+          dragActive
+            ? 'border-blue-500 bg-blue-50'
+            : isDarkMode
+            ? 'border-gray-600 bg-gray-800'
+            : 'border-gray-300 bg-gray-50'
+        }`}
+        onDragEnter={handleDrag}
+        onDragLeave={handleDrag}
+        onDragOver={handleDrag}
+        onDrop={handleDrop}
+      >
+        <input
+          type="file"
+          multiple
+          onChange={handleChange}
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+        />
+        <Paperclip className={`mx-auto h-12 w-12 mb-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+        <p className={`text-lg font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          Drop files here or click to upload
+        </p>
+        <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+          Support for images, documents, and other files
+        </p>
+      </div>
+
+      {/* Attachments List */}
+      {attachments.length > 0 && (
+        <div className={`rounded-lg border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+          <div className="p-4 border-b border-gray-200">
+            <h4 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+              Attachments ({attachments.length})
+            </h4>
+          </div>
+          <div className="p-4 space-y-3">
+            {attachments.map((attachment) => (
+              <div key={attachment.id} className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <FileText className={`h-5 w-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+                  <div>
+                    <p className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                      {attachment.name}
+                    </p>
+                    <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                      {formatFileSize(attachment.size)} • {attachment.uploadDate}
+                    </p>
+                  </div>
+                </div>
+                <button className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg">
+                  <Download className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Task Templates Component
+const TaskTemplates = ({ isDarkMode, onCreateFromTemplate }) => {
+  const [showTemplates, setShowTemplates] = useState(false);
+
+  const templates = [
+    {
+      id: 1,
+      name: 'Bug Fix Template',
+      description: 'Standard template for bug fixes',
+      icon: '🐛',
+      tasks: [
+        { title: 'Reproduce the bug', priority: 'high' },
+        { title: 'Identify root cause', priority: 'high' },
+        { title: 'Implement fix', priority: 'medium' },
+        { title: 'Write unit tests', priority: 'medium' },
+        { title: 'Code review', priority: 'low' },
+        { title: 'Deploy to staging', priority: 'low' }
+      ]
+    },
+    {
+      id: 2,
+      name: 'Feature Development',
+      description: 'Complete feature development workflow',
+      icon: '⚡',
+      tasks: [
+        { title: 'Requirements analysis', priority: 'high' },
+        { title: 'Design mockups', priority: 'high' },
+        { title: 'Backend implementation', priority: 'medium' },
+        { title: 'Frontend implementation', priority: 'medium' },
+        { title: 'Integration testing', priority: 'medium' },
+        { title: 'User acceptance testing', priority: 'low' }
+      ]
+    },
+    {
+      id: 3,
+      name: 'Content Creation',
+      description: 'Blog post and content creation workflow',
+      icon: '📝',
+      tasks: [
+        { title: 'Research topic', priority: 'high' },
+        { title: 'Create outline', priority: 'high' },
+        { title: 'Write first draft', priority: 'medium' },
+        { title: 'Review and edit', priority: 'medium' },
+        { title: 'Add images/media', priority: 'low' },
+        { title: 'Publish and promote', priority: 'low' }
+      ]
+    },
+    {
+      id: 4,
+      name: 'Product Launch',
+      description: 'Complete product launch checklist',
+      icon: '🚀',
+      tasks: [
+        { title: 'Market research', priority: 'high' },
+        { title: 'Competitive analysis', priority: 'high' },
+        { title: 'Marketing strategy', priority: 'medium' },
+        { title: 'Launch campaign', priority: 'medium' },
+        { title: 'Monitor metrics', priority: 'low' },
+        { title: 'Post-launch review', priority: 'low' }
+      ]
+    }
+  ];
+
+  const handleUseTemplate = (template) => {
+    onCreateFromTemplate(template);
+    setShowTemplates(false);
+    toast.success(`Created project from ${template.name}`);
+  };
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setShowTemplates(!showTemplates)}
+        className="flex items-center space-x-2 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600"
+      >
+        <Template className="h-4 w-4" />
+        <span>Templates</span>
+      </button>
+
+      <AnimatePresence>
+        {showTemplates && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className={`absolute right-0 mt-2 w-96 rounded-xl shadow-lg border z-50 ${
+              isDarkMode
+                ? 'bg-gray-800 border-gray-700'
+                : 'bg-white border-gray-200'
+            }`}
+          >
+            <div className="p-4 border-b border-gray-200">
+              <h3 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                Project Templates
+              </h3>
+              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                Choose a template to get started quickly
+              </p>
+            </div>
+            <div className="max-h-96 overflow-y-auto p-4 space-y-3">
+              {templates.map((template) => (
+                <div
+                  key={template.id}
+                  className={`p-4 rounded-lg border cursor-pointer transition-colors hover:bg-opacity-50 ${
+                    isDarkMode
+                      ? 'border-gray-600 hover:bg-gray-700'
+                      : 'border-gray-200 hover:bg-gray-50'
+                  }`}
+                  onClick={() => handleUseTemplate(template)}
+                >
+                  <div className="flex items-start space-x-3">
+                    <span className="text-2xl">{template.icon}</span>
+                    <div className="flex-1">
+                      <h4 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                        {template.name}
+                      </h4>
+                      <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mb-2`}>
+                        {template.description}
+                      </p>
+                      <div className="flex items-center space-x-2">
+                        <span className={`text-xs px-2 py-1 rounded ${
+                          isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-600'
+                        }`}>
+                          {template.tasks.length} tasks
+                        </span>
+                        <span className="text-xs text-blue-500">Click to use</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+// Export/Import Data Component
+const DataExportImport = ({ isDarkMode, onExport, onImport }) => {
+  const [showModal, setShowModal] = useState(false);
+  const [importData, setImportData] = useState('');
+
+  const handleExport = (format) => {
+    onExport(format);
+    toast.success(`Data exported as ${format.toUpperCase()}`);
+    setShowModal(false);
+  };
+
+  const handleImport = () => {
+    try {
+      const data = JSON.parse(importData);
+      onImport(data);
+      toast.success('Data imported successfully');
+      setImportData('');
+      setShowModal(false);
+    } catch (error) {
+      toast.error('Invalid JSON format');
+    }
+  };
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setShowModal(true)}
+        className="flex items-center space-x-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+      >
+        <Share2 className="h-4 w-4" />
+        <span>Export/Import</span>
+      </button>
+
+      <AnimatePresence>
+        {showModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          >
+            <motion.div
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.9 }}
+              className={`rounded-xl shadow-xl max-w-md w-full mx-4 ${
+                isDarkMode ? 'bg-gray-800' : 'bg-white'
+              }`}
+            >
+              <div className="p-6">
+                <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                  Export/Import Data
+                </h3>
+                
+                <div className="space-y-4">
+                  {/* Export Section */}
+                  <div>
+                    <h4 className={`font-medium mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                      Export Data
+                    </h4>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => handleExport('json')}
+                        className="flex-1 flex items-center justify-center space-x-2 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                      >
+                        <Download className="h-4 w-4" />
+                        <span>JSON</span>
+                      </button>
+                      <button
+                        onClick={() => handleExport('csv')}
+                        className="flex-1 flex items-center justify-center space-x-2 px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+                      >
+                        <Download className="h-4 w-4" />
+                        <span>CSV</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Import Section */}
+                  <div>
+                    <h4 className={`font-medium mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                      Import Data
+                    </h4>
+                    <textarea
+                      value={importData}
+                      onChange={(e) => setImportData(e.target.value)}
+                      placeholder="Paste JSON data here..."
+                      rows={4}
+                      className={`w-full px-3 py-2 rounded-lg border ${
+                        isDarkMode
+                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                          : 'bg-white border-gray-200 text-gray-900 placeholder-gray-500'
+                      }`}
+                    />
+                    <button
+                      onClick={handleImport}
+                      disabled={!importData.trim()}
+                      className="w-full mt-2 flex items-center justify-center space-x-2 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Upload className="h-4 w-4" />
+                      <span>Import Data</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex space-x-3 mt-6">
+                  <button
+                    onClick={() => setShowModal(false)}
+                    className={`flex-1 px-4 py-2 rounded-lg border ${
+                      isDarkMode
+                        ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
+                        : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 
 // Enhanced Login Component
 const EnhancedLogin = ({ onLogin }) => {
@@ -350,6 +1141,49 @@ const EnhancedLogin = ({ onLogin }) => {
 const EnhancedHeader = ({ user, onLogout, isDarkMode, onThemeChange, onToggleSidebar, isSidebarOpen }) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
+  const [notifications, setNotifications] = useState([
+    {
+      id: 1,
+      title: 'Task Assigned',
+      message: 'You have been assigned to "Fix login bug"',
+      type: 'info',
+      time: '2 minutes ago',
+      read: false
+    },
+    {
+      id: 2,
+      title: 'Deadline Approaching',
+      message: 'Website Redesign project due in 2 days',
+      type: 'warning',
+      time: '1 hour ago',
+      read: false
+    },
+    {
+      id: 3,
+      title: 'Task Completed',
+      message: 'John completed "Design mockups"',
+      type: 'success',
+      time: '3 hours ago',
+      read: true
+    }
+  ]);
+
+  const handleMarkAsRead = (notificationId) => {
+    setNotifications(prev => 
+      prev.map(notif => 
+        notif.id === notificationId ? { ...notif, read: true } : notif
+      )
+    );
+  };
+
+  const handleClearAll = () => {
+    setNotifications([]);
+  };
+
+  const handleSearch = (searchTerm, filters) => {
+    console.log('Search:', searchTerm, filters);
+    // Implement search functionality
+  };
 
   return (
     <header className={`backdrop-blur-xl shadow-sm border-b fixed top-0 left-0 right-0 z-50 transition-colors duration-300 ${
@@ -384,22 +1218,12 @@ const EnhancedHeader = ({ user, onLogout, isDarkMode, onThemeChange, onToggleSid
             </div>
           </div>
 
-          {/* Center - Search (Desktop) */}
+          {/* Center - Advanced Search (Desktop) */}
           <div className="hidden md:flex flex-1 max-w-lg mx-4 lg:mx-8">
-            <div className="relative w-full">
-              <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 ${
-                isDarkMode ? 'text-gray-400' : 'text-gray-400'
-              }`} />
-              <input
-                type="text"
-                className={`w-full pl-10 pr-4 py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all sm:text-sm ${
-                  isDarkMode
-                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
-                    : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-500'
-                }`}
-                placeholder="Search tasks, projects..."
-              />
-            </div>
+            <AdvancedSearch 
+              isDarkMode={isDarkMode}
+              onSearch={handleSearch}
+            />
           </div>
 
           {/* Right side */}
@@ -424,14 +1248,13 @@ const EnhancedHeader = ({ user, onLogout, isDarkMode, onThemeChange, onToggleSid
               {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </button>
 
-            <button className={`relative p-2 rounded-xl transition-all ${
-              isDarkMode
-                ? 'text-gray-400 hover:text-gray-300 hover:bg-gray-700'
-                : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
-            }`}>
-              <Bell className="h-5 w-5" />
-              <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">3</span>
-            </button>
+            {/* Notifications */}
+            <NotificationCenter 
+              isDarkMode={isDarkMode}
+              notifications={notifications}
+              onMarkAsRead={handleMarkAsRead}
+              onClearAll={handleClearAll}
+            />
 
             <div className="relative">
               <button
@@ -2627,6 +3450,16 @@ function App() {
           </main>
         </div>
       </div>
+      <Toaster 
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: isDarkMode ? '#374151' : '#ffffff',
+            color: isDarkMode ? '#ffffff' : '#000000',
+          },
+        }}
+      />
     </Router>
   );
 }
