@@ -48,15 +48,49 @@ const EnhancedLogin = ({ onLogin }) => {
     setTimeout(() => {
       // Create user data object. For registration, take the first part of the name as firstName.
       const userName = isRegistering ? formData.name : 'Demo User';
+      const userId = Math.random().toString(36).substr(2, 9);
+      
       const userData = {
         email: formData.email,
         name: userName,
         firstName: userName.split(' ')[0], // Used for the header greeting
-        id: Math.random().toString(36).substr(2, 9) // NOTE: Not for production use
+        id: userId,
+        isNewUser: isRegistering, // Flag to identify new users
+        registrationDate: isRegistering ? new Date().toISOString() : '2024-01-01T00:00:00.000Z',
+        preferences: {
+          theme: 'dark',
+          notifications: true,
+          emailUpdates: true,
+          language: 'en'
+        },
+        subscription: {
+          plan: 'free',
+          features: ['basic_tasks', 'basic_projects', 'basic_analytics']
+        }
       };
 
       // Store user data in localStorage (temporary solution)
       localStorage.setItem('taskflow_user', JSON.stringify(userData));
+      
+      // Initialize fresh stats for new users
+      if (isRegistering) {
+        const newUserStats = {
+          totalProjects: 0,
+          activeTasks: 0,
+          completedToday: 0,
+          timeToday: 0,
+          totalTimeThisWeek: 0,
+          completedThisWeek: 0,
+          productivity: 0,
+          streak: 0
+        };
+        localStorage.setItem(`taskflow_stats_${userId}`, JSON.stringify(newUserStats));
+        
+        // Initialize empty data arrays for new users
+        localStorage.setItem(`taskflow_projects_${userId}`, JSON.stringify([]));
+        localStorage.setItem(`taskflow_tasks_${userId}`, JSON.stringify([]));
+        localStorage.setItem(`taskflow_timeEntries_${userId}`, JSON.stringify([]));
+      }
 
       onLogin(userData);
       setLoading(false);
@@ -490,6 +524,7 @@ const EnhancedSidebar = ({ isDarkMode, isOpen, onClose }) => {
     { name: 'Tasks', href: '/tasks', icon: CheckSquare, color: 'from-purple-500 to-purple-600' },
     { name: 'Time Tracking', href: '/time', icon: Clock, color: 'from-orange-500 to-orange-600' },
     { name: 'Analytics', href: '/analytics', icon: BarChart3, color: 'from-pink-500 to-pink-600' },
+    { name: 'Settings', href: '/settings', icon: Settings, color: 'from-gray-500 to-gray-600' },
   ];
 
   const handleNavClick = () => {
@@ -570,32 +605,267 @@ const EnhancedSidebar = ({ isDarkMode, isOpen, onClose }) => {
   );
 };
 
-// Enhanced Dashboard
-const EnhancedDashboard = ({ isDarkMode: _isDarkMode }) => {
-  const [stats] = useState({
-    totalProjects: 12,
-    activeTasks: 28,
-    completedToday: 5,
-    timeToday: 6.5
+// Quick Add Form Component
+const QuickAddForm = ({ type, onAdd, onCancel }) => {
+  const [formData, setFormData] = useState({
+    title: '',
+    name: '',
+    description: '',
+    priority: 'medium'
   });
 
-  const [projects] = useState([
-    { id: 1, name: 'Website Redesign', progress: 75, tasks: 12, color: 'from-blue-500 to-blue-600' },
-    { id: 2, name: 'Mobile App', progress: 45, tasks: 8, color: 'from-green-500 to-green-600' },
-    { id: 3, name: 'Marketing Campaign', progress: 90, tasks: 15, color: 'from-purple-500 to-purple-600' },
-  ]);
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (type === 'task' && formData.title.trim()) {
+      onAdd(formData.title.trim(), formData.priority);
+    } else if (type === 'project' && formData.name.trim()) {
+      onAdd(formData.name.trim(), formData.description.trim());
+    }
+    onCancel();
+  };
 
-  const [tasks] = useState([
-    { id: 1, title: 'Design homepage mockup', project: 'Website Redesign', priority: 'high', status: 'in-progress' },
-    { id: 2, title: 'Set up authentication', project: 'Mobile App', priority: 'medium', status: 'todo' },
-    { id: 3, title: 'Write blog post', project: 'Marketing Campaign', priority: 'low', status: 'in-progress' },
-  ]);
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {type === 'task' ? (
+        <>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Task Title</label>
+            <input
+              type="text"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              placeholder="Enter task title..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              autoFocus
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
+            <select
+              value={formData.priority}
+              onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="low">Low Priority</option>
+              <option value="medium">Medium Priority</option>
+              <option value="high">High Priority</option>
+            </select>
+          </div>
+        </>
+      ) : (
+        <>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Project Name</label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="Enter project name..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              autoFocus
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Description (Optional)</label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Enter project description..."
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+        </>
+      )}
+      
+      <div className="flex gap-3 pt-4">
+        <button
+          type="submit"
+          className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          Add {type === 'task' ? 'Task' : 'Project'}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
+};
+
+// Enhanced Dashboard with User-Specific Data
+const EnhancedDashboard = ({ isDarkMode: _isDarkMode, user }) => {
+  // Get user-specific stats or use defaults for demo users
+  const getUserStats = () => {
+    if (!user) return { totalProjects: 0, activeTasks: 0, completedToday: 0, timeToday: 0, totalTimeThisWeek: 0, completedThisWeek: 0, productivity: 0, streak: 0 };
+    
+    const savedStats = localStorage.getItem(`taskflow_stats_${user.id}`);
+    if (savedStats) {
+      return JSON.parse(savedStats);
+    }
+    
+    // Default stats for demo users (existing users)
+    if (!user.isNewUser) {
+      return {
+        totalProjects: 12,
+        activeTasks: 28,
+        completedToday: 5,
+        timeToday: 6.5,
+        totalTimeThisWeek: 32.5,
+        completedThisWeek: 23,
+        productivity: 85,
+        streak: 7
+      };
+    }
+    
+    // Fresh stats for new users
+    return {
+      totalProjects: 0,
+      activeTasks: 0,
+      completedToday: 0,
+      timeToday: 0,
+      totalTimeThisWeek: 0,
+      completedThisWeek: 0,
+      productivity: 0,
+      streak: 0
+    };
+  };
+
+  const [stats, setStats] = useState(getUserStats());
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [quickAddType, setQuickAddType] = useState('task'); // 'task' or 'project'
+
+  // Get user-specific projects
+  const getUserProjects = () => {
+    if (!user) return [];
+    
+    const savedProjects = localStorage.getItem(`taskflow_projects_${user.id}`);
+    if (savedProjects) {
+      return JSON.parse(savedProjects);
+    }
+    
+    // Default projects for demo users
+    if (!user.isNewUser) {
+      return [
+        { id: 1, name: 'Website Redesign', progress: 75, tasks: 12, color: 'from-blue-500 to-blue-600', status: 'active', dueDate: '2024-12-31' },
+        { id: 2, name: 'Mobile App', progress: 45, tasks: 8, color: 'from-green-500 to-green-600', status: 'active', dueDate: '2024-11-30' },
+        { id: 3, name: 'Marketing Campaign', progress: 90, tasks: 15, color: 'from-purple-500 to-purple-600', status: 'active', dueDate: '2024-10-15' },
+      ];
+    }
+    
+    return []; // Empty for new users
+  };
+
+  const [projects, setProjects] = useState(getUserProjects());
+
+  // Get user-specific tasks
+  const getUserTasks = () => {
+    if (!user) return [];
+    
+    const savedTasks = localStorage.getItem(`taskflow_tasks_${user.id}`);
+    if (savedTasks) {
+      return JSON.parse(savedTasks);
+    }
+    
+    // Default tasks for demo users
+    if (!user.isNewUser) {
+      return [
+        { id: 1, title: 'Design homepage mockup', project: 'Website Redesign', priority: 'high', status: 'in-progress', dueDate: '2024-10-20' },
+        { id: 2, title: 'Set up authentication', project: 'Mobile App', priority: 'medium', status: 'todo', dueDate: '2024-10-25' },
+        { id: 3, title: 'Write blog post', project: 'Marketing Campaign', priority: 'low', status: 'in-progress', dueDate: '2024-10-18' },
+        { id: 4, title: 'Review user feedback', project: 'Website Redesign', priority: 'medium', status: 'todo', dueDate: '2024-10-22' },
+      ];
+    }
+    
+    return []; // Empty for new users
+  };
+
+  const [tasks, setTasks] = useState(getUserTasks());
+
+  // Quick Add Functions
+  const addQuickTask = (title, priority = 'medium') => {
+    const newTask = {
+      id: Date.now(),
+      title,
+      project: projects.length > 0 ? projects[0].name : 'General',
+      priority,
+      status: 'todo',
+      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 7 days from now
+      createdAt: new Date().toISOString()
+    };
+    
+    const updatedTasks = [...tasks, newTask];
+    setTasks(updatedTasks);
+    localStorage.setItem(`taskflow_tasks_${user.id}`, JSON.stringify(updatedTasks));
+    
+    // Update stats
+    const updatedStats = { ...stats, activeTasks: stats.activeTasks + 1 };
+    setStats(updatedStats);
+    localStorage.setItem(`taskflow_stats_${user.id}`, JSON.stringify(updatedStats));
+  };
+
+  const addQuickProject = (name, description = '') => {
+    const colors = [
+      'from-blue-500 to-blue-600',
+      'from-green-500 to-green-600',
+      'from-purple-500 to-purple-600',
+      'from-pink-500 to-pink-600',
+      'from-indigo-500 to-indigo-600'
+    ];
+    
+    const newProject = {
+      id: Date.now(),
+      name,
+      description,
+      progress: 0,
+      tasks: 0,
+      color: colors[projects.length % colors.length],
+      status: 'active',
+      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days from now
+      createdAt: new Date().toISOString()
+    };
+    
+    const updatedProjects = [...projects, newProject];
+    setProjects(updatedProjects);
+    localStorage.setItem(`taskflow_projects_${user.id}`, JSON.stringify(updatedProjects));
+    
+    // Update stats
+    const updatedStats = { ...stats, totalProjects: stats.totalProjects + 1 };
+    setStats(updatedStats);
+    localStorage.setItem(`taskflow_stats_${user.id}`, JSON.stringify(updatedStats));
+  };
+
+  const completeTask = (taskId) => {
+    const updatedTasks = tasks.map(task => 
+      task.id === taskId ? { ...task, status: 'completed', completedAt: new Date().toISOString() } : task
+    );
+    setTasks(updatedTasks);
+    localStorage.setItem(`taskflow_tasks_${user.id}`, JSON.stringify(updatedTasks));
+    
+    // Update stats
+    const updatedStats = { 
+      ...stats, 
+      activeTasks: Math.max(0, stats.activeTasks - 1),
+      completedToday: stats.completedToday + 1,
+      completedThisWeek: stats.completedThisWeek + 1
+    };
+    setStats(updatedStats);
+    localStorage.setItem(`taskflow_stats_${user.id}`, JSON.stringify(updatedStats));
+  };
 
   const statCards = [
     { name: 'Total Projects', value: stats.totalProjects, icon: FolderOpen, color: 'from-blue-500 to-blue-600', bg: 'bg-blue-50' },
     { name: 'Active Tasks', value: stats.activeTasks, icon: AlertCircle, color: 'from-orange-500 to-orange-600', bg: 'bg-orange-50' },
     { name: 'Completed Today', value: stats.completedToday, icon: CheckCircle, color: 'from-green-500 to-green-600', bg: 'bg-green-50' },
-    { name: 'Hours Today', value: stats.timeToday, icon: Clock, color: 'from-purple-500 to-purple-600', bg: 'bg-purple-50' }
+    { name: 'Hours Today', value: stats.timeToday, icon: Clock, color: 'from-purple-500 to-purple-600', bg: 'bg-purple-50' },
+    { name: 'Weekly Hours', value: stats.totalTimeThisWeek, icon: TrendingUp, color: 'from-cyan-500 to-cyan-600', bg: 'bg-cyan-50' },
+    { name: 'Productivity', value: `${stats.productivity}%`, icon: Target, color: 'from-emerald-500 to-emerald-600', bg: 'bg-emerald-50' },
+    { name: 'Streak Days', value: stats.streak, icon: Calendar, color: 'from-amber-500 to-amber-600', bg: 'bg-amber-50' },
+    { name: 'Week Complete', value: stats.completedThisWeek, icon: CheckSquare, color: 'from-violet-500 to-violet-600', bg: 'bg-violet-50' }
   ];
 
   const getPriorityColor = (priority) => {
@@ -609,25 +879,71 @@ const EnhancedDashboard = ({ isDarkMode: _isDarkMode }) => {
 
   return (
     <div className="space-y-8 p-6">
-      {/* Welcome Section */}
+      {/* Welcome Section with Quick Actions */}
       <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-2xl p-8 text-white">
         <div className="absolute inset-0 opacity-20"></div>
-        <div className="relative">
-          <h1 className="text-4xl font-bold mb-2">Good morning! 👋</h1>
-          <p className="text-blue-100 text-lg">Ready to tackle your tasks today?</p>
+        <div className="relative flex justify-between items-center">
+          <div>
+            <h1 className="text-4xl font-bold mb-2">
+              Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, {user?.firstName || 'there'}! 👋
+            </h1>
+            <p className="text-blue-100 text-lg">
+              {user?.isNewUser ? 'Welcome to TaskFlow! Let\'s get you started.' : 'Ready to tackle your tasks today?'}
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => { setQuickAddType('task'); setShowQuickAdd(true); }}
+              className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/30 text-white px-4 py-2 rounded-xl transition-all flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Quick Task
+            </button>
+            <button
+              onClick={() => { setQuickAddType('project'); setShowQuickAdd(true); }}
+              className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/30 text-white px-4 py-2 rounded-xl transition-all flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              New Project
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Stats Grid */}
+      {/* Quick Add Modal */}
+      {showQuickAdd && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">
+                Add New {quickAddType === 'task' ? 'Task' : 'Project'}
+              </h3>
+              <button
+                onClick={() => setShowQuickAdd(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <QuickAddForm
+              type={quickAddType}
+              onAdd={quickAddType === 'task' ? addQuickTask : addQuickProject}
+              onCancel={() => setShowQuickAdd(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Enhanced Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {statCards.map((stat) => (
-          <div key={stat.name} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all">
+          <div key={stat.name} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all group">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">{stat.name}</p>
                 <p className="text-3xl font-bold text-gray-900 mt-1">{stat.value}</p>
               </div>
-              <div className={`p-3 rounded-xl bg-gradient-to-r ${stat.color}`}>
+              <div className={`p-3 rounded-xl bg-gradient-to-r ${stat.color} group-hover:scale-110 transition-transform`}>
                 <stat.icon className="h-6 w-6 text-white" />
               </div>
             </div>
@@ -679,21 +995,379 @@ const EnhancedDashboard = ({ isDarkMode: _isDarkMode }) => {
             </div>
           </div>
           <div className="p-6 space-y-4">
-            {tasks.map((task) => (
-              <div key={task.id} className="p-4 border border-gray-100 rounded-xl hover:border-gray-200 transition-all">
-                <div className="flex items-start space-x-3">
-                  <input type="checkbox" className="mt-1 rounded border-gray-300" />
-                  <div className="flex-1">
-                    <h4 className="font-medium text-gray-900">{task.title}</h4>
-                    <p className="text-sm text-gray-500 mt-1">{task.project}</p>
+            {tasks.length === 0 ? (
+              <div className="text-center py-8">
+                <CheckSquare className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500 mb-4">No tasks yet!</p>
+                <button
+                  onClick={() => { setQuickAddType('task'); setShowQuickAdd(true); }}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 mx-auto"
+                >
+                  <Plus className="h-4 w-4" />
+                  Create Your First Task
+                </button>
+              </div>
+            ) : (
+              tasks.slice(0, 5).map((task) => (
+                <div key={task.id} className="p-4 border border-gray-100 rounded-xl hover:border-gray-200 transition-all group">
+                  <div className="flex items-start space-x-3">
+                    <input 
+                      type="checkbox" 
+                      className="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
+                      checked={task.status === 'completed'}
+                      onChange={() => task.status !== 'completed' && completeTask(task.id)}
+                    />
+                    <div className="flex-1">
+                      <h4 className={`font-medium ${task.status === 'completed' ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
+                        {task.title}
+                      </h4>
+                      <div className="flex items-center gap-2 mt-1">
+                        <p className="text-sm text-gray-500">{task.project}</p>
+                        {task.dueDate && (
+                          <span className="text-xs text-gray-400">
+                            Due: {new Date(task.dueDate).toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2 py-1 rounded-lg text-xs font-medium border ${getPriorityColor(task.priority)}`}>
+                        {task.priority}
+                      </span>
+                      {task.status === 'completed' && (
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      )}
+                    </div>
                   </div>
-                  <span className={`px-2 py-1 rounded-lg text-xs font-medium border ${getPriorityColor(task.priority)}`}>
-                    {task.priority}
-                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Enhanced Settings/Profile Component
+const EnhancedSettings = ({ user, onUpdateUser, isDarkMode }) => {
+  const [activeTab, setActiveTab] = useState('profile');
+  const [profileData, setProfileData] = useState({
+    name: user?.name || '',
+    email: user?.email || '',
+    firstName: user?.firstName || '',
+    bio: '',
+    timezone: 'UTC',
+    language: user?.preferences?.language || 'en'
+  });
+  
+  const [preferences, setPreferences] = useState({
+    theme: user?.preferences?.theme || 'dark',
+    notifications: user?.preferences?.notifications || true,
+    emailUpdates: user?.preferences?.emailUpdates || true,
+    weeklyReports: false,
+    taskReminders: true
+  });
+
+  const [stats, setStats] = useState({
+    accountCreated: user?.registrationDate || new Date().toISOString(),
+    totalProjects: 0,
+    totalTasks: 0,
+    completedTasks: 0,
+    totalTimeLogged: 0
+  });
+
+  React.useEffect(() => {
+    if (user) {
+      const userStats = localStorage.getItem(`taskflow_stats_${user.id}`);
+      if (userStats) {
+        const parsedStats = JSON.parse(userStats);
+        setStats(prev => ({
+          ...prev,
+          totalProjects: parsedStats.totalProjects || 0,
+          totalTasks: parsedStats.activeTasks || 0,
+          completedTasks: parsedStats.completedToday || 0,
+          totalTimeLogged: parsedStats.totalTimeThisWeek || 0
+        }));
+      }
+    }
+  }, [user]);
+
+  const handleSaveProfile = () => {
+    const updatedUser = {
+      ...user,
+      name: profileData.name,
+      firstName: profileData.name.split(' ')[0],
+      preferences: {
+        ...user.preferences,
+        language: profileData.language
+      }
+    };
+    
+    localStorage.setItem('taskflow_user', JSON.stringify(updatedUser));
+    onUpdateUser(updatedUser);
+    alert('Profile updated successfully!');
+  };
+
+  const handleSavePreferences = () => {
+    const updatedUser = {
+      ...user,
+      preferences: {
+        ...user.preferences,
+        ...preferences
+      }
+    };
+    
+    localStorage.setItem('taskflow_user', JSON.stringify(updatedUser));
+    onUpdateUser(updatedUser);
+    alert('Preferences updated successfully!');
+  };
+
+  const tabs = [
+    { id: 'profile', name: 'Profile', icon: User },
+    { id: 'preferences', name: 'Preferences', icon: Settings },
+    { id: 'stats', name: 'Statistics', icon: BarChart3 },
+    { id: 'subscription', name: 'Subscription', icon: Target }
+  ];
+
+  return (
+    <div className="max-w-4xl mx-auto p-6 space-y-6">
+      {/* Header */}
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Settings</h1>
+        <p className="text-gray-600">Manage your account settings and preferences</p>
+      </div>
+
+      {/* Tabs */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
+        <div className="border-b border-gray-200">
+          <nav className="flex space-x-8 px-6">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${
+                  activeTab === tab.id
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <tab.icon className="h-4 w-4" />
+                {tab.name}
+              </button>
+            ))}
+          </nav>
+        </div>
+
+        <div className="p-6">
+          {activeTab === 'profile' && (
+            <div className="space-y-6">
+              <h3 className="text-lg font-semibold text-gray-900">Profile Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                  <input
+                    type="text"
+                    value={profileData.name}
+                    onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                  <input
+                    type="email"
+                    value={profileData.email}
+                    onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Timezone</label>
+                  <select
+                    value={profileData.timezone}
+                    onChange={(e) => setProfileData({ ...profileData, timezone: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="UTC">UTC</option>
+                    <option value="EST">Eastern Time</option>
+                    <option value="PST">Pacific Time</option>
+                    <option value="GMT">Greenwich Mean Time</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Language</label>
+                  <select
+                    value={profileData.language}
+                    onChange={(e) => setProfileData({ ...profileData, language: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="en">English</option>
+                    <option value="es">Spanish</option>
+                    <option value="fr">French</option>
+                    <option value="de">German</option>
+                  </select>
                 </div>
               </div>
-            ))}
-          </div>
+              <button
+                onClick={handleSaveProfile}
+                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Save Profile
+              </button>
+            </div>
+          )}
+
+          {activeTab === 'preferences' && (
+            <div className="space-y-6">
+              <h3 className="text-lg font-semibold text-gray-900">Preferences</h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium text-gray-900">Email Notifications</h4>
+                    <p className="text-sm text-gray-500">Receive email updates about your tasks</p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={preferences.emailUpdates}
+                    onChange={(e) => setPreferences({ ...preferences, emailUpdates: e.target.checked })}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium text-gray-900">Push Notifications</h4>
+                    <p className="text-sm text-gray-500">Get notified about important updates</p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={preferences.notifications}
+                    onChange={(e) => setPreferences({ ...preferences, notifications: e.target.checked })}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium text-gray-900">Weekly Reports</h4>
+                    <p className="text-sm text-gray-500">Receive weekly productivity reports</p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={preferences.weeklyReports}
+                    onChange={(e) => setPreferences({ ...preferences, weeklyReports: e.target.checked })}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium text-gray-900">Task Reminders</h4>
+                    <p className="text-sm text-gray-500">Get reminded about upcoming deadlines</p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={preferences.taskReminders}
+                    onChange={(e) => setPreferences({ ...preferences, taskReminders: e.target.checked })}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+              <button
+                onClick={handleSavePreferences}
+                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Save Preferences
+              </button>
+            </div>
+          )}
+
+          {activeTab === 'stats' && (
+            <div className="space-y-6">
+              <h3 className="text-lg font-semibold text-gray-900">Account Statistics</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="bg-blue-50 rounded-xl p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <Calendar className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-blue-600 font-medium">Member Since</p>
+                      <p className="text-lg font-bold text-blue-900">
+                        {new Date(stats.accountCreated).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-green-50 rounded-xl p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-green-100 rounded-lg">
+                      <FolderOpen className="h-5 w-5 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-green-600 font-medium">Total Projects</p>
+                      <p className="text-lg font-bold text-green-900">{stats.totalProjects}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-purple-50 rounded-xl p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-purple-100 rounded-lg">
+                      <CheckSquare className="h-5 w-5 text-purple-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-purple-600 font-medium">Tasks Completed</p>
+                      <p className="text-lg font-bold text-purple-900">{stats.completedTasks}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-orange-50 rounded-xl p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-orange-100 rounded-lg">
+                      <Clock className="h-5 w-5 text-orange-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-orange-600 font-medium">Time Logged</p>
+                      <p className="text-lg font-bold text-orange-900">{stats.totalTimeLogged}h</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'subscription' && (
+            <div className="space-y-6">
+              <h3 className="text-lg font-semibold text-gray-900">Subscription</h3>
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-xl font-bold text-gray-900">Free Plan</h4>
+                    <p className="text-gray-600 mt-1">Perfect for getting started</p>
+                    <div className="mt-4 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        <span className="text-sm text-gray-600">Up to 5 projects</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        <span className="text-sm text-gray-600">Basic task management</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        <span className="text-sm text-gray-600">Time tracking</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-3xl font-bold text-gray-900">$0</p>
+                    <p className="text-gray-500">per month</p>
+                    <button className="mt-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all">
+                      Upgrade to Pro
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -1895,6 +2569,10 @@ function App() {
     localStorage.removeItem('taskflow_user');
   };
 
+  const handleUpdateUser = (updatedUser) => {
+    setUser(updatedUser);
+  };
+
   const handleThemeChange = (darkMode) => {
     setIsDarkMode(darkMode);
     localStorage.setItem('taskflow_theme', darkMode ? 'dark' : 'light');
@@ -1936,11 +2614,12 @@ function App() {
           <main className="flex-1 overflow-auto lg:ml-0">
             <div className="max-w-7xl mx-auto">
               <Routes>
-                <Route path="/" element={<EnhancedDashboard isDarkMode={isDarkMode} />} />
+                <Route path="/" element={<EnhancedDashboard isDarkMode={isDarkMode} user={user} />} />
                 <Route path="/projects" element={<ProjectsPage isDarkMode={isDarkMode} />} />
                 <Route path="/tasks" element={<TasksPage isDarkMode={isDarkMode} />} />
                 <Route path="/time" element={<TimeTrackingPage isDarkMode={isDarkMode} />} />
                 <Route path="/analytics" element={<AnalyticsPage isDarkMode={isDarkMode} />} />
+                <Route path="/settings" element={<EnhancedSettings user={user} onUpdateUser={handleUpdateUser} isDarkMode={isDarkMode} />} />
                 <Route path="*" element={<Navigate to="/" />} />
               </Routes>
             </div>
