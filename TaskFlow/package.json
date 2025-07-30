@@ -38,7 +38,7 @@
     "analyze": "cd frontend && npm run analyze",
     "security:audit": "npm audit --audit-level high",
     "security:fix": "npm audit fix",
-    "prepare": "husky install",
+
 
     "install:frontend": "cd frontend && npm install",
     "install:backend": "cd backend && npm install",
