@@ -50,28 +50,22 @@ jobs:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: 🟢 Setup Node.js with Corepack
+      - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: "npm"
-          cache-dependency-path: TaskFlow/backend/package-lock.json
 
-      - name: ⚡ Enable Corepack for speed
-        run: corepack enable
-
-      - name: 💾 Extreme Cache Strategy
+      - name: 💾 Backend Cache
         uses: actions/cache@v3
         id: cache-deps
         with:
           path: |
             TaskFlow/backend/node_modules
             ~/.npm
-            ~/.cache/yarn
-          key: backend-extreme-${{ hashFiles('TaskFlow/backend/package-lock.json') }}-v2
+          key: backend-${{ hashFiles('TaskFlow/backend/package.json') }}-v3
           restore-keys: |
-            backend-extreme-${{ hashFiles('TaskFlow/backend/package-lock.json') }}-
-            backend-extreme-
+            backend-${{ hashFiles('TaskFlow/backend/package.json') }}-
+            backend-
 
       - name: ⚡ Fast Backend Install
         if: steps.cache-deps.outputs.cache-hit != 'true'
@@ -107,29 +101,22 @@ jobs:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: 🟢 Setup Node.js with Corepack
+      - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: "npm"
-          cache-dependency-path: TaskFlow/frontend/package-lock.json
 
-      - name: ⚡ Enable Corepack for speed
-        run: corepack enable
-
-      - name: 💾 Extreme Frontend Cache
+      - name: 💾 Frontend Cache
         uses: actions/cache@v3
         id: cache-deps
         with:
           path: |
             TaskFlow/frontend/node_modules
             ~/.npm
-            ~/.cache/yarn
-            TaskFlow/frontend/.next/cache
-          key: frontend-extreme-${{ hashFiles('TaskFlow/frontend/package-lock.json') }}-v2
+          key: frontend-${{ hashFiles('TaskFlow/frontend/package.json') }}-v3
           restore-keys: |
-            frontend-extreme-${{ hashFiles('TaskFlow/frontend/package-lock.json') }}-
-            frontend-extreme-
+            frontend-${{ hashFiles('TaskFlow/frontend/package.json') }}-
+            frontend-
 
       - name: ⚡ Fast Install with Timeout
         if: steps.cache-deps.outputs.cache-hit != 'true'
