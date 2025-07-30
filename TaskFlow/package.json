@@ -49,7 +49,17 @@
     "docs:build": "cd docs && npm run build",
 
     "commit": "git add . && git commit",
-    "setup-hooks": "husky install && chmod +x scripts/*.js"
+    "setup-hooks": "husky install && chmod +x scripts/*.js",
+    
+    "deploy:staging": "bash scripts/deploy-staging.sh",
+    "deploy:production": "bash scripts/deploy-production.sh",
+    "security:scan": "npm audit --audit-level=moderate && docker run --rm -v $(pwd):/app aquasec/trivy fs /app",
+    "monitoring:start": "docker-compose -f docker-compose.yml up prometheus grafana -d",
+    "monitoring:stop": "docker-compose -f docker-compose.yml down prometheus grafana",
+    "release:changelog": "conventional-changelog -p angular -i CHANGELOG.md -s",
+    "release:tag": "git tag -a v$(date +%Y.%m.%d) -m 'Release v$(date +%Y.%m.%d)'",
+    "health:check": "curl -f http://localhost:3001/health || exit 1",
+    "metrics:view": "curl http://localhost:3001/metrics"
   },
   "keywords": [
     "project-management",

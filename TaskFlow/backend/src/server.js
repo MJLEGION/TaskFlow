@@ -36,11 +36,16 @@ app.use(express.json());
 // Import routes (assuming these files exist in src/routes/)
 const authRoutes = require('./routes/auth');
 const tasksRoutes = require('./routes/tasks');
+const { router: metricsRoutes, trackMetrics } = require('./routes/metrics');
 // const usersRoutes = require('./routes/users'); // Uncomment if you have a users route
+
+// Apply metrics tracking middleware globally
+app.use(trackMetrics);
 
 // Use routes
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', tasksRoutes);
+app.use('/', metricsRoutes); // Metrics at root level for Prometheus scraping
 // app.use('/api/users', usersRoutes); // Uncomment if you have a users route
 
 // Enhanced Health Check Endpoint with monitoring
