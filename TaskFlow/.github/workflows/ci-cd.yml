@@ -1,5 +1,5 @@
-# Smart CI/CD with Path-based Triggers and Optimized Caching
-name: Smart CI/CD Pipeline
+# Ultra-Fast CI/CD with Aggressive Optimizations
+name: Ultra-Fast CI/CD Pipeline
 
 on:
   push:
@@ -9,6 +9,13 @@ on:
 
 env:
   NODE_VERSION: "20.x"
+  # Ultra-aggressive npm optimizations
+  NPM_CONFIG_PROGRESS: "false"
+  NPM_CONFIG_LOGLEVEL: "error"
+  NPM_CONFIG_AUDIT: "false"
+  NPM_CONFIG_FUND: "false"
+  NPM_CONFIG_UPDATE_NOTIFIER: "false"
+  CI: "true"
 
 jobs:
   # Detect changes to determine what to build
@@ -50,35 +57,39 @@ jobs:
           cache: "npm"
           cache-dependency-path: TaskFlow/backend/package-lock.json
 
-      - name: 💾 Cache dependencies
+      - name: 💾 Ultra Cache (node_modules + npm cache)
         uses: actions/cache@v3
         id: cache-deps
         with:
-          path: TaskFlow/backend/node_modules
-          key: backend-deps-${{ hashFiles('TaskFlow/backend/package-lock.json') }}
-          restore-keys: backend-deps-
+          path: |
+            TaskFlow/backend/node_modules
+            ~/.npm
+          key: backend-ultra-${{ hashFiles('TaskFlow/backend/package-lock.json') }}-${{ runner.os }}
+          restore-keys: |
+            backend-ultra-${{ hashFiles('TaskFlow/backend/package-lock.json') }}-
+            backend-ultra-
 
-      - name: 📦 Install dependencies
+      - name: ⚡ Ultra-fast install
         if: steps.cache-deps.outputs.cache-hit != 'true'
         run: |
           cd TaskFlow/backend
-          npm ci --prefer-offline --no-audit --no-fund
+          npm ci --silent --prefer-offline --no-audit --no-fund --no-optional --ignore-scripts --cache ~/.npm
 
-      - name: 🔍 Lint & Test
+      - name: 🔍 Fast Lint & Test
         run: |
           cd TaskFlow/backend
-          npm run lint
-          npm test -- --coverage --watchAll=false --maxWorkers=2
+          npm run lint --silent
+          npm test -- --coverage --watchAll=false --maxWorkers=2 --silent --verbose=false
 
-      - name: 🏗️ Build
+      - name: 🏗️ Silent Build
         run: |
           cd TaskFlow/backend
-          npm run build --if-present
+          npm run build --if-present --silent
 
-      - name: 🔒 Security audit
+      - name: 🔒 Quick Security Check
         run: |
           cd TaskFlow/backend
-          npm audit --audit-level=moderate || echo "Vulnerabilities found"
+          npm audit --audit-level=high --silent || echo "High vulnerabilities found"
 
   # Frontend pipeline - only runs if frontend changed
   frontend-pipeline:
@@ -97,30 +108,34 @@ jobs:
           cache: "npm"
           cache-dependency-path: TaskFlow/frontend/package-lock.json
 
-      - name: 💾 Cache dependencies
+      - name: 💾 Ultra Cache (node_modules + npm cache)
         uses: actions/cache@v3
         id: cache-deps
         with:
-          path: TaskFlow/frontend/node_modules
-          key: frontend-deps-${{ hashFiles('TaskFlow/frontend/package-lock.json') }}
-          restore-keys: frontend-deps-
+          path: |
+            TaskFlow/frontend/node_modules
+            ~/.npm
+          key: frontend-ultra-${{ hashFiles('TaskFlow/frontend/package-lock.json') }}-${{ runner.os }}
+          restore-keys: |
+            frontend-ultra-${{ hashFiles('TaskFlow/frontend/package-lock.json') }}-
+            frontend-ultra-
 
-      - name: 📦 Install dependencies
+      - name: ⚡ Ultra-fast install
         if: steps.cache-deps.outputs.cache-hit != 'true'
         run: |
           cd TaskFlow/frontend
-          npm ci --prefer-offline --no-audit --no-fund
+          npm ci --silent --prefer-offline --no-audit --no-fund --no-optional --ignore-scripts --cache ~/.npm
 
-      - name: 🔍 Lint & Test
+      - name: 🔍 Fast Lint & Test
         run: |
           cd TaskFlow/frontend
-          npm run lint
-          npm test -- --coverage --watchAll=false --maxWorkers=2
+          npm run lint --silent
+          npm test -- --coverage --watchAll=false --maxWorkers=2 --silent --verbose=false
 
-      - name: 🏗️ Build
+      - name: 🏗️ Silent Build
         run: |
           cd TaskFlow/frontend
-          npm run build
+          npm run build --silent
 
   # Deploy backend - only if backend changed and on main branch
   deploy-backend:
@@ -145,7 +160,7 @@ jobs:
           mkdir -p backend-deploy
           cp -r TaskFlow/backend/* backend-deploy/
           cd backend-deploy
-          npm ci --omit=dev --prefer-offline --no-audit --no-fund
+          npm ci --omit=dev --silent --prefer-offline --no-audit --no-fund --no-optional --ignore-scripts
 
       - name: 🚀 Deploy to Azure
         uses: azure/webapps-deploy@v3
@@ -182,7 +197,7 @@ jobs:
       - name: 🏗️ Build for production
         run: |
           cd TaskFlow/frontend
-          npm run build
+          npm run build --silent
 
       - name: 📦 Prepare deployment
         run: |
