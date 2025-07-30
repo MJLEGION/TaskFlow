@@ -1,7 +1,7 @@
 TaskFlow 
 A modern, intuitive task management SaaS application built with Next.js, React, and TypeScript. TaskFlow helps individuals and teams organize, prioritize, and track their tasks efficiently with a clean, responsive interface.
 
-Live Demo (Coming Soon) | Website (Coming Soon) | Contributing Guide
+Live Demo (Coming Soon) | Website (Coming Soon) | Contributing Guide today
 
 🌟 Core Features 
 Task Management: Create, edit, and delete tasks with priority levels, due dates, and status tracking (Todo, In Progress, Completed).
