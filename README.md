@@ -19,7 +19,7 @@ State Management: Zustand
 
 Forms: React Hook Form + Zod
 
-Backend & Database: Next.js API Routes, PostgreSQL, Prisma ORM
+Backend & Database: Next.js API Routes, PostgreSQL, Prisma ORM fff
 
 Authentication: NextAuth.js
 
