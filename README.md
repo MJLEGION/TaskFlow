@@ -3,7 +3,7 @@ A modern, intuitive task management SaaS application built with Next.js, React, 
 
 Live Demo (Coming Soon) | Website (Coming Soon) | Contributing Guide
 
-🌟 Core Features
+🌟 Core Features 
 Task Management: Create, edit, and delete tasks with priority levels, due dates, and status tracking (Todo, In Progress, Completed).
 
 Collaboration: Team workspaces, task assignment, real-time updates, and a comment system.
