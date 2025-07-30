@@ -1,5 +1,54 @@
 {
-  "dependencies": {
-    "morgan": "^1.10.1"
+  "name": "my-package",
+  "version": "0.0.0",
+  "description": "A brief description of my package",
+  "main": "index.js",
+  "scripts": {
+    "release": "release-it"
+  },
+  "keywords": [],
+  "author": "MJLEGION <m.george@alustudent.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "release-it": "^19.0.4",
+    "@release-it/conventional-changelog": "^8.0.1"
+  },
+  "release-it": {
+    "$schema": "https://unpkg.com/release-it/schema/release-it.json",
+    "git": {
+      "commitMessage": "chore(release): release ${version}",
+      "tagName": "v${version}",
+      "requireCommits": true,
+      "requireBranch": "main"
+    },
+    "github": {
+      "release": true,
+      "tokenRef": "GITHUB_TOKEN"
+    },
+    "npm": {
+      "publish": true,
+      "tag": "latest"
+    },
+    "plugins": {
+      "@release-it/conventional-changelog": {
+        "preset": {
+          "name": "conventionalcommits",
+          "types": [
+            { "type": "feat", "section": "Features" },
+            { "type": "fix", "section": "Bug Fixes" },
+            { "type": "perf", "section": "Performance Improvements" },
+            { "type": "revert", "section": "Reverts" },
+            { "type": "docs", "section": "Documentation", "hidden": true },
+            { "type": "style", "section": "Styles", "hidden": true },
+            { "type": "chore", "section": "Chore", "hidden": true },
+            { "type": "refactor", "section": "Code Refactoring", "hidden": true },
+            { "type": "test", "section": "Tests", "hidden": true },
+            { "type": "build", "section": "Build System", "hidden": true },
+            { "type": "ci", "section": "CI/CD", "hidden": true }
+          ]
+        },
+        "infile": "CHANGELOG.md"
+      }
+    }
   }
 }
