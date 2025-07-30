@@ -31,9 +31,9 @@ jobs:
         with:
           filters: |
             backend:
-              - 'TaskFlow/backend/**'
+              - 'backend/**'
             frontend:
-              - 'TaskFlow/frontend/**'
+              - 'frontend/**'
 
   # 2. SECURITY SCANNING - DevSecOps Integration
   security-scan:
@@ -53,7 +53,6 @@ jobs:
       - name: 🔒 Dependency Vulnerability Scan
         run: |
           echo "🔍 Scanning for dependency vulnerabilities..."
-          cd TaskFlow
           npm audit --audit-level=moderate --json > security-report.json || true
 
           # Check if vulnerabilities found
@@ -68,7 +67,7 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: "fs"
-          scan-ref: "./TaskFlow"
+          scan-ref: "."
           format: "sarif"
           output: "trivy-results.sarif"
 
@@ -110,34 +109,34 @@ jobs:
         uses: actions/cache@v3
         if: matrix.should-run == 'true'
         with:
-          path: TaskFlow/${{ matrix.component }}/node_modules
-          key: ${{ matrix.component }}-${{ hashFiles(format('TaskFlow/{0}/package.json', matrix.component)) }}-v5
+          path: ${{ matrix.component }}/node_modules
+          key: ${{ matrix.component }}-${{ hashFiles(format('{0}/package.json', matrix.component)) }}-v5
           restore-keys: |
-            ${{ matrix.component }}-${{ hashFiles(format('TaskFlow/{0}/package.json', matrix.component)) }}-
+            ${{ matrix.component }}-${{ hashFiles(format('{0}/package.json', matrix.component)) }}-
             ${{ matrix.component }}-
 
       - name: 📦 Install Dependencies
         if: matrix.should-run == 'true'
         run: |
-          cd TaskFlow/${{ matrix.component }}
+          cd ${{ matrix.component }}
           npm install --silent --no-audit --no-fund
 
       - name: 🔍 Lint Code
         if: matrix.should-run == 'true'
         run: |
-          cd TaskFlow/${{ matrix.component }}
+          cd ${{ matrix.component }}
           npm run lint
 
       - name: 🧪 Run Tests
         if: matrix.should-run == 'true'
         run: |
-          cd TaskFlow/${{ matrix.component }}
+          cd ${{ matrix.component }}
           npm test
 
       - name: 🏗️ Build Application
         if: matrix.should-run == 'true'
         run: |
-          cd TaskFlow/${{ matrix.component }}
+          cd ${{ matrix.component }}
           npm run build
 
       - name: 📤 Upload Build Artifacts
@@ -145,7 +144,7 @@ jobs:
         if: matrix.should-run == 'true'
         with:
           name: ${{ matrix.component }}-build
-          path: TaskFlow/${{ matrix.component }}/build
+          path: ${{ matrix.component }}/build
 
   # 4. CONTAINER BUILD & PUSH
   build-containers:
@@ -184,7 +183,7 @@ jobs:
       - name: 🏗️ Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./TaskFlow
+          context: .
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
