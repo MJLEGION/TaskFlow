@@ -34,7 +34,7 @@ Bash
 
 git clone https://github.com/MJLEGION/TaskFlow.git
 cd TaskFlow
-2. Install dependencies:
+2. Install dependencies: 1
 
 Bash
 
