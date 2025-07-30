@@ -73,12 +73,13 @@ jobs:
             backend-extreme-${{ hashFiles('TaskFlow/backend/package-lock.json') }}-
             backend-extreme-
 
-      - name: 🚀 Lightning Install (< 1 min target)
+      - name: ⚡ Fast Backend Install
         if: steps.cache-deps.outputs.cache-hit != 'true'
+        timeout-minutes: 2
         run: |
           cd TaskFlow/backend
-          # Use npm with maximum parallelism and aggressive caching
-          npm ci --silent --prefer-offline --no-audit --no-fund --no-optional --ignore-scripts --maxsockets 20 --network-timeout 30000
+          # Simple, reliable install with timeout
+          npm install --silent --prefer-offline --no-audit --no-fund --legacy-peer-deps
 
       - name: 🔍 Fast Lint & Test
         run: |
@@ -130,21 +131,13 @@ jobs:
             frontend-extreme-${{ hashFiles('TaskFlow/frontend/package-lock.json') }}-
             frontend-extreme-
 
-      - name: 🚀 Use CI-Optimized Dependencies
+      - name: ⚡ Fast Install with Timeout
         if: steps.cache-deps.outputs.cache-hit != 'true'
+        timeout-minutes: 3
         run: |
           cd TaskFlow/frontend
-          # Use lightweight package.json for CI (removes Storybook, Cypress, etc.)
-          cp package.ci.json package.json
-          # Generate optimized package-lock.json
-          npm install --package-lock-only --silent
-
-      - name: ⚡ Lightning Install (< 90 seconds target)
-        if: steps.cache-deps.outputs.cache-hit != 'true'
-        run: |
-          cd TaskFlow/frontend
-          # Ultra-fast install with minimal dependencies (60-80% fewer packages)
-          npm ci --silent --prefer-offline --no-audit --no-fund --no-optional --ignore-scripts --maxsockets 20 --network-timeout 60000
+          # Simple, fast npm install with timeout and fallback
+          npm install --silent --prefer-offline --no-audit --no-fund --legacy-peer-deps || npm install --silent --no-audit --no-fund --legacy-peer-deps
 
       - name: 🔍 Fast Lint & Test
         run: |
