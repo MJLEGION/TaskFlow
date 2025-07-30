@@ -59,21 +59,19 @@ jobs:
         uses: actions/cache@v3
         id: cache-deps
         with:
-          path: |
-            TaskFlow/backend/node_modules
-            ~/.npm
-          key: backend-${{ hashFiles('TaskFlow/backend/package.json') }}-v3
+          path: TaskFlow/backend/node_modules
+          key: backend-only-${{ hashFiles('TaskFlow/backend/package.json') }}-v4
           restore-keys: |
-            backend-${{ hashFiles('TaskFlow/backend/package.json') }}-
-            backend-
+            backend-only-${{ hashFiles('TaskFlow/backend/package.json') }}-
+            backend-only-
 
-      - name: ⚡ Fast Backend Install
+      - name: ⚡ Direct Backend Install (Skip Root)
         if: steps.cache-deps.outputs.cache-hit != 'true'
         timeout-minutes: 2
         run: |
           cd TaskFlow/backend
-          # Simple, reliable install with timeout
-          npm install --silent --prefer-offline --no-audit --no-fund --legacy-peer-deps
+          # Install ONLY backend deps, skip root postinstall
+          npm install --silent --no-audit --no-fund --legacy-peer-deps
 
       - name: 🔍 Fast Lint & Test
         run: |
@@ -110,21 +108,19 @@ jobs:
         uses: actions/cache@v3
         id: cache-deps
         with:
-          path: |
-            TaskFlow/frontend/node_modules
-            ~/.npm
-          key: frontend-${{ hashFiles('TaskFlow/frontend/package.json') }}-v3
+          path: TaskFlow/frontend/node_modules
+          key: frontend-only-${{ hashFiles('TaskFlow/frontend/package.json') }}-v4
           restore-keys: |
-            frontend-${{ hashFiles('TaskFlow/frontend/package.json') }}-
-            frontend-
+            frontend-only-${{ hashFiles('TaskFlow/frontend/package.json') }}-
+            frontend-only-
 
-      - name: ⚡ Fast Install with Timeout
+      - name: ⚡ Direct Frontend Install (Skip Root)
         if: steps.cache-deps.outputs.cache-hit != 'true'
         timeout-minutes: 3
         run: |
           cd TaskFlow/frontend
-          # Simple, fast npm install with timeout and fallback
-          npm install --silent --prefer-offline --no-audit --no-fund --legacy-peer-deps || npm install --silent --no-audit --no-fund --legacy-peer-deps
+          # Install ONLY frontend deps, skip root postinstall
+          npm install --silent --no-audit --no-fund --legacy-peer-deps
 
       - name: 🔍 Fast Lint & Test
         run: |

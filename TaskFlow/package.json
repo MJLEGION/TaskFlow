@@ -39,7 +39,7 @@
     "security:audit": "npm audit --audit-level high",
     "security:fix": "npm audit fix",
     "prepare": "husky install",
-    "postinstall": "npm run install:frontend && npm run install:backend",
+
     "install:frontend": "cd frontend && npm install",
     "install:backend": "cd backend && npm install",
     "clean": "npm run clean:frontend && npm run clean:backend",
@@ -47,12 +47,7 @@
     "clean:backend": "cd backend && rm -rf node_modules dist",
     "docs:serve": "docsify serve docs",
     "docs:build": "cd docs && npm run build",
-    "changelog": "node scripts/update-changelog.js",
-    "changelog:generate": "conventional-changelog -p angular -i CHANGELOG.md -s",
-    "release": "standard-version",
-    "release:minor": "standard-version --release-as minor",
-    "release:major": "standard-version --release-as major",
-    "release:patch": "standard-version --release-as patch",
+
     "commit": "git add . && git commit",
     "setup-hooks": "husky install && chmod +x scripts/*.js"
   },
@@ -90,12 +85,12 @@
     "@types/node": "^20.10.5",
     "chalk": "^4.1.2",
     "concurrently": "^8.2.2",
-    "conventional-changelog-cli": "^4.1.0",
+
     "cross-env": "^7.0.3",
     "husky": "^8.0.3",
     "lint-staged": "^15.2.0",
     "prettier": "^3.1.1",
-    "standard-version": "^9.5.0",
+
     "typescript": "^5.3.3"
   },
   "workspaces": [
