@@ -71,7 +71,7 @@ This project uses Jest and Playwright for unit, integration, and end-to-end test
 We welcome contributions! Please read our Contributing Guide to get started. You can report bugs, request features, and submit pull requests through our GitHub Issues.
 
 Roadmap
-Phase 1: Core Features ✅
+Phase 1: Core Features 
 
 Phase 2: Collaboration 🚧
 
