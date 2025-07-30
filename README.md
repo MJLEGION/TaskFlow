@@ -12,7 +12,7 @@ Analytics & Insights: Progress tracking with visual charts, productivity metrics
 
 Modern User Experience: Clean UI with dark/light modes, responsive design, drag-and-drop functionality, and offline support.
 
-🛠️ Tech Stack
+🛠️ Tech Stack  3
 Frontend: Next.js 14, React 18, TypeScript, Tailwind CSS, shadcn/ui
 
 State Management: Zustand
