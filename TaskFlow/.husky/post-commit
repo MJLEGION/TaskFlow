@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Auto-update changelog after each commit
+echo "📝 Updating changelog..."
+node scripts/update-changelog.js
+
+# Add updated changelog to git if it was modified
+if [ -n "$(git status --porcelain CHANGELOG.md)" ]; then
+  echo "✅ Changelog updated, staging changes..."
+  git add CHANGELOG.md package.json
+  git commit --amend --no-edit --no-verify
+  echo "🎉 Changelog automatically updated!"
+fi

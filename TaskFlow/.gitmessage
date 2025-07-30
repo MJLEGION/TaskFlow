@@ -1,0 +1,49 @@
+# <type>[optional scope]: <description>
+#
+# [optional body]
+#
+# [optional footer(s)]
+
+# --- COMMIT END ---
+# Type can be:
+#    feat     (new feature)
+#    fix      (bug fix)
+#    docs     (changes to documentation)
+#    style    (formatting, missing semi colons, etc; no code change)
+#    refactor (refactoring production code)
+#    test     (adding missing tests, refactoring tests; no production code change)
+#    chore    (updating grunt tasks etc; no production code change)
+#    perf     (performance improvements)
+#    build    (changes that affect the build system or external dependencies)
+#    ci       (changes to CI configuration files and scripts)
+#    revert   (reverts a previous commit)
+#
+# Scope is optional and can be anything specifying place of the commit change.
+# For example: auth, api, ui, database, etc.
+#
+# Description should be imperative, present tense: "change" not "changed" nor "changes"
+# Don't capitalize first letter, no dot (.) at the end
+#
+# Body should include motivation for the change and contrast with previous behavior
+#
+# Footer should contain any information about Breaking Changes and is also the place to
+# reference GitHub issues that this commit Closes.
+#
+# Examples:
+# feat(auth): add JWT token refresh mechanism
+# fix(api): resolve task deletion cascade issue
+# docs(readme): update installation instructions
+# style: fix code formatting in TaskCard component
+# refactor(hooks): extract common API logic to custom hook
+# test(components): add unit tests for TaskList component
+# chore(deps): update dependencies to latest versions
+# perf(search): optimize search algorithm for large datasets
+# build(docker): update Dockerfile for production deployment
+# ci(github): add automated testing workflow
+# revert: revert "feat(auth): add JWT token refresh mechanism"
+#
+# Breaking changes example:
+# feat(api): change user authentication endpoint
+#
+# BREAKING CHANGE: The /auth/login endpoint now requires email instead of username
+# This affects all clients using the authentication API
