@@ -1,90 +1,193 @@
-# .github/workflows/ci.yml
-name: CI/CD Pipeline
+# Smart CI/CD with Path-based Triggers and Optimized Caching
+name: Smart CI/CD Pipeline
+
 on:
   push:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
 
+env:
+  NODE_VERSION: "20.x"
+
 jobs:
-  lint-and-test:
+  # Detect changes to determine what to build
+  detect-changes:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        service: [backend, frontend]
+    outputs:
+      backend-changed: ${{ steps.changes.outputs.backend }}
+      frontend-changed: ${{ steps.changes.outputs.frontend }}
     steps:
-      - name: Checkout code
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔍 Detect changes
+        uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            backend:
+              - 'TaskFlow/backend/**'
+            frontend:
+              - 'TaskFlow/frontend/**'
+
+  # Backend pipeline - only runs if backend changed
+  backend-pipeline:
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backend-changed == 'true'
+
+    steps:
+      - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: "18.x"
+          node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
-          cache-dependency-path: TaskFlow/${{ matrix.service }}/package-lock.json
+          cache-dependency-path: TaskFlow/backend/package-lock.json
 
-      - name: Install dependencies
-        run: |
-          cd TaskFlow/${{ matrix.service }}
-          npm ci
-
-      - name: Run ESLint
-        run: |
-          cd TaskFlow/${{ matrix.service }}
-          npm run lint
-
-      - name: Run tests
-        run: |
-          cd TaskFlow/${{ matrix.service }}
-          npm test -- --coverage --watchAll=false
-
-      - name: Upload coverage reports
-        uses: codecov/codecov-action@v3
+      - name: 💾 Cache dependencies
+        uses: actions/cache@v3
+        id: cache-deps
         with:
-          file: TaskFlow/${{ matrix.service }}/coverage/lcov.info
-          flags: ${{ matrix.service }}
-          name: ${{ matrix.service }}-coverage
-          fail_ci_if_error: false
+          path: TaskFlow/backend/node_modules
+          key: backend-deps-${{ hashFiles('TaskFlow/backend/package-lock.json') }}
+          restore-keys: backend-deps-
 
-      - name: Build application
+      - name: 📦 Install dependencies
+        if: steps.cache-deps.outputs.cache-hit != 'true'
         run: |
-          cd TaskFlow/${{ matrix.service }}
-          npm run build
+          cd TaskFlow/backend
+          npm ci --prefer-offline --no-audit --no-fund
 
-  deploy-frontend:
-    needs: lint-and-test
+      - name: 🔍 Lint & Test
+        run: |
+          cd TaskFlow/backend
+          npm run lint
+          npm test -- --coverage --watchAll=false --maxWorkers=2
+
+      - name: 🏗️ Build
+        run: |
+          cd TaskFlow/backend
+          npm run build --if-present
+
+      - name: 🔒 Security audit
+        run: |
+          cd TaskFlow/backend
+          npm audit --audit-level=moderate || echo "Vulnerabilities found"
+
+  # Frontend pipeline - only runs if frontend changed
+  frontend-pipeline:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: detect-changes
+    if: needs.detect-changes.outputs.frontend-changed == 'true'
 
     steps:
-      - name: Checkout code
+      - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: "18.x"
+          node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
           cache-dependency-path: TaskFlow/frontend/package-lock.json
 
-      - name: Install dependencies
+      - name: 💾 Cache dependencies
+        uses: actions/cache@v3
+        id: cache-deps
+        with:
+          path: TaskFlow/frontend/node_modules
+          key: frontend-deps-${{ hashFiles('TaskFlow/frontend/package-lock.json') }}
+          restore-keys: frontend-deps-
+
+      - name: 📦 Install dependencies
+        if: steps.cache-deps.outputs.cache-hit != 'true'
         run: |
           cd TaskFlow/frontend
-          npm ci
+          npm ci --prefer-offline --no-audit --no-fund
 
-      - name: Build React app
+      - name: 🔍 Lint & Test
+        run: |
+          cd TaskFlow/frontend
+          npm run lint
+          npm test -- --coverage --watchAll=false --maxWorkers=2
+
+      - name: 🏗️ Build
         run: |
           cd TaskFlow/frontend
           npm run build
 
-      - name: Prepare deployment package
+  # Deploy backend - only if backend changed and on main branch
+  deploy-backend:
+    runs-on: ubuntu-latest
+    needs: [detect-changes, backend-pipeline]
+    if: |
+      needs.detect-changes.outputs.backend-changed == 'true' &&
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'push'
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: 📦 Create deployment package
+        run: |
+          mkdir -p backend-deploy
+          cp -r TaskFlow/backend/* backend-deploy/
+          cd backend-deploy
+          npm ci --omit=dev --prefer-offline --no-audit --no-fund
+
+      - name: 🚀 Deploy to Azure
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: "taskflow-backend-legion"
+          slot-name: "Production"
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_BACKEND }}
+          package: ./backend-deploy
+
+  # Deploy frontend - only if frontend changed and on main branch
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    needs: [detect-changes, frontend-pipeline]
+    if: |
+      needs.detect-changes.outputs.frontend-changed == 'true' &&
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'push'
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: 💾 Restore frontend cache
+        uses: actions/cache@v3
+        with:
+          path: TaskFlow/frontend/node_modules
+          key: frontend-deps-${{ hashFiles('TaskFlow/frontend/package-lock.json') }}
+
+      - name: 🏗️ Build for production
         run: |
           cd TaskFlow/frontend
-          # Copy necessary files to build directory
+          npm run build
+
+      - name: 📦 Prepare deployment
+        run: |
+          cd TaskFlow/frontend
           cp server.js build/
-          cp package.json build/
-          cp package-lock.json build/
-          # Create production package.json
           cd build
           cat > package.json << 'EOF'
           {
@@ -100,7 +203,7 @@ jobs:
           }
           EOF
 
-      - name: Deploy to Azure Web App
+      - name: 🚀 Deploy to Azure
         uses: azure/webapps-deploy@v2
         with:
           app-name: "taskflow-webapp-legion"

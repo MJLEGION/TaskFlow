@@ -1,0 +1,132 @@
+# .github/workflows/ci.yml
+name: CI/CD Pipeline
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [backend, frontend]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+          cache: "npm"
+          cache-dependency-path: TaskFlow/${{ matrix.service }}/package-lock.json
+
+      - name: Cache node modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            TaskFlow/${{ matrix.service }}/node_modules
+            ~/.npm
+          key: ${{ runner.os }}-node-${{ matrix.service }}-${{ hashFiles('TaskFlow/${{ matrix.service }}/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-${{ matrix.service }}-
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies
+        run: |
+          cd TaskFlow/${{ matrix.service }}
+          npm ci --prefer-offline --no-audit
+
+      - name: Run ESLint
+        run: |
+          cd TaskFlow/${{ matrix.service }}
+          npm run lint
+
+      - name: Run tests
+        run: |
+          cd TaskFlow/${{ matrix.service }}
+          npm test -- --coverage --watchAll=false
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          file: TaskFlow/${{ matrix.service }}/coverage/lcov.info
+          flags: ${{ matrix.service }}
+          name: ${{ matrix.service }}-coverage
+          fail_ci_if_error: false
+
+      - name: Build application
+        run: |
+          cd TaskFlow/${{ matrix.service }}
+          npm run build
+
+  deploy-frontend:
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+          cache: "npm"
+          cache-dependency-path: TaskFlow/frontend/package-lock.json
+
+      - name: Cache node modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            TaskFlow/frontend/node_modules
+            ~/.npm
+          key: ${{ runner.os }}-node-frontend-deploy-${{ hashFiles('TaskFlow/frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-frontend-deploy-
+            ${{ runner.os }}-node-frontend-
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies
+        run: |
+          cd TaskFlow/frontend
+          npm ci --prefer-offline --no-audit
+
+      - name: Build React app
+        run: |
+          cd TaskFlow/frontend
+          npm run build
+
+      - name: Prepare deployment package
+        run: |
+          cd TaskFlow/frontend
+          # Copy necessary files to build directory
+          cp server.js build/
+          cp package.json build/
+          cp package-lock.json build/
+          # Create production package.json
+          cd build
+          cat > package.json << 'EOF'
+          {
+            "name": "taskflow-frontend",
+            "version": "1.0.2",
+            "private": true,
+            "dependencies": {
+              "express": "^4.21.2"
+            },
+            "scripts": {
+              "start": "node server.js"
+            }
+          }
+          EOF
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: "taskflow-webapp-legion"
+          slot-name: "production"
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: TaskFlow/frontend/build

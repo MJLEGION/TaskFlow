@@ -31,16 +31,28 @@ jobs:
         uses: actions/checkout@v4
 
       - name: 🟢 Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
           cache-dependency-path: TaskFlow/backend/package-lock.json
 
+      - name: 💾 Cache node modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            TaskFlow/backend/node_modules
+            ~/.npm
+          key: ${{ runner.os }}-node-backend-build-${{ hashFiles('TaskFlow/backend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-backend-build-
+            ${{ runner.os }}-node-backend-
+            ${{ runner.os }}-node-
+
       - name: 📦 Install dependencies
         run: |
           cd TaskFlow/backend
-          npm ci
+          npm ci --prefer-offline --no-audit
 
       - name: 🔍 Run ESLint
         run: |
@@ -83,16 +95,28 @@ jobs:
         uses: actions/checkout@v4
 
       - name: 🟢 Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
           cache-dependency-path: TaskFlow/backend/package-lock.json
 
+      - name: 💾 Cache node modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            TaskFlow/backend/node_modules
+            ~/.npm
+          key: ${{ runner.os }}-node-backend-security-${{ hashFiles('TaskFlow/backend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-backend-security-
+            ${{ runner.os }}-node-backend-
+            ${{ runner.os }}-node-
+
       - name: 📦 Install dependencies
         run: |
           cd TaskFlow/backend
-          npm ci
+          npm ci --prefer-offline --no-audit
 
       - name: 🔍 Run npm audit (Dependency Vulnerability Scan)
         run: |
@@ -131,8 +155,8 @@ jobs:
           cp -r backend/* backend-deploy/
           cd backend-deploy
 
-          # Install production dependencies
-          npm ci --only=production
+          # Install production dependencies only
+          npm ci --omit=dev --prefer-offline --no-audit
 
           # Create web.config for Azure App Service
           cat > web.config << 'EOF'
