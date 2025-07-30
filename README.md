@@ -12,7 +12,7 @@ Analytics & Insights: Progress tracking with visual charts, productivity metrics
 
 Modern User Experience: Clean UI with dark/light modes, responsive design, drag-and-drop functionality, and offline support.
 
-🛠️ Tech Stack
+🛠️ Tech Stack  3
 Frontend: Next.js 14, React 18, TypeScript, Tailwind CSS, shadcn/ui
 
 State Management: Zustand
@@ -25,7 +25,7 @@ Authentication: NextAuth.js
 
 Deployment: Vercel, GitHub Actions
 
-Testing: Jest, React Testing Library, Playwright
+Testing: Jest, React Testing Library, Playwright 1
  
  Quick Start
 1. Clone the repository:
@@ -34,7 +34,7 @@ Bash
 
 git clone https://github.com/MJLEGION/TaskFlow.git
 cd TaskFlow
-2. Install dependencies:
+2. Install dependencies: 1
 
 Bash
 
